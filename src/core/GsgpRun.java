@@ -23,7 +23,7 @@ public class GsgpRun extends GpRun {
 		super.initialize();
 		applyDepthLimit = false;
 		mutationStep = 1.0;
-		boundedMutation = false;
+		//boundedMutation = false;
 		//boundedMutation = true;
 		//buildIndividuals = true;
 		buildIndividuals = false;

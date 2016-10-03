@@ -67,7 +67,7 @@ public class GpRun implements Serializable {
 			fullSet.add(programElement);
 		}
 
-		populationSize = 100;
+		populationSize = 20;
 		applyDepthLimit = true;
 		maximumDepth = 17;
 		crossoverProbability = 0.9;
