@@ -6,7 +6,7 @@ public class Main {
 
 	public static final String DATA_FILENAME = "ppb";
 	public static final int NUMBER_OF_RUNS = 3;
-	public static final int NUMBER_OF_GENERATIONS = 10;
+	public static final int NUMBER_OF_GENERATIONS = 1;
 
 	public static void main(String[] args) {
 
