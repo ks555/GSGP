@@ -41,18 +41,24 @@ public class MIndividual implements Serializable {
 		evaluateUnseenError();
 	}
 	
+	public void evaluateTheta() {
+		
+		
+	}
+	
 	public void evaluateTrainingError() {
-		int temp = 0;
+		double temp = 0;
 		for(int i=0;i<numPrograms;i++){
 			temp+=this.getProgram(i).getTrainingError();			
 		}
 		trainingErrorAvg=temp/2;
+
 	}
 	
 	public void evaluateUnseenError() {
-		int temp = 0;
+		double temp = 0;
 		for(int i=0;i<numPrograms;i++){
-			temp+=this.getProgram(i).getTrainingError();			
+			temp+=this.getProgram(i).getUnseenError();			
 		}
 		unseenErrorAvg=temp/2;
 	}
@@ -61,6 +67,17 @@ public class MIndividual implements Serializable {
 		programs.add(index, program);
 }
 	
+	public void print() {
+		
+		if (sizeOverride == true) {
+			System.out.println("Best individual ID: " + this.getId());
+			System.out.println("Best individual Training Error: " + this.getTrainingError());	
+			System.out.println("Best individual Unseen Error: " + this.getUnseenError());
+		} else {
+//			printIndex = 0;
+//			printInner();
+		}
+	}
 
 //	// ##### get's and set's from here on #####
 	
@@ -91,4 +108,8 @@ public class MIndividual implements Serializable {
 		return program;
 	}
 	
+	public void setSizeOverride(boolean sizeOverride) {
+		this.sizeOverride = sizeOverride;
+	}
+
 }
