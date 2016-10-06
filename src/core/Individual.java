@@ -20,6 +20,7 @@ public class Individual implements Serializable {
 	protected int depth;
 	protected double trainingError, unseenError;
 	protected double[] trainingDataOutputs, unseenDataOutputs;
+	protected double[] trainingErrorVector, unseenErrorVector;
 
 	protected int evaluateIndex;
 	protected int maximumDepthAchieved;
@@ -97,6 +98,59 @@ public class Individual implements Serializable {
 		return Math.sqrt(errorSum / data.length);
 	}
 
+	
+	//ADDED BY KRISTEN
+	//Methods for calculating error vectors
+	
+	//evaluateErrorVectors called from MIndividual initialize method
+	//MIndividual has vectors of error vectors (one for training, one for unseen)
+	//when Mindividual is initialized, error vector is calc for each program and added to 
+	//appropriate vector
+	//vector of error vectors is used to calc Theta (what if Mindividual is more than two vectors?)
+	//if build individual is set to false, output vector of offspring is set during crossover / mutation
+	//based on parent semantics/random tree semantics
+	public void evaluateErrorVector(Data data) {
+		evaluateErrorVectorOnTrainingData(data);
+		evaluateErrorVectorOnUnseenData(data);
+	}
+	
+	public double[] evaluateErrorVectorOnTrainingData(Data data) {
+		double[][] trainingData = data.getTrainingData();
+		if (sizeOverride == false) {
+			trainingDataOutputs = evaluate(trainingData);
+		}
+		trainingErrorVector = calculateErrorVector(trainingData, trainingDataOutputs);
+		return trainingDataOutputs;
+	}
+
+	public double[] evaluateErrorVectorOnUnseenData(Data data) {
+		double[][] unseenData = data.getUnseenData();
+		if (sizeOverride == false) {
+			unseenDataOutputs = evaluate(unseenData);
+		}
+		unseenErrorVector = calculateErrorVector(unseenData, unseenDataOutputs);
+		return unseenDataOutputs;
+	}
+
+	public double[] evaluateErrorVector(double[][] data) {
+		double[] outputs = new double[data.length];
+		for (int i = 0; i < outputs.length; i++) {
+			evaluateIndex = 0;
+			outputs[i] = evaluateInner(data[i]);
+		}
+		return outputs;
+	}
+	
+	//ADDED BY KRISTEN
+	protected double[] calculateErrorVector(double[][] data, double[] outputs) {
+		double[] errorVector=new double[data.length];
+		for (int i = 0; i < data.length; i++) {
+			errorVector[i] = outputs[i]-data[i][data[0].length - 1];			
+		}
+		return errorVector;
+	}
+
+	
 	public Individual deepCopy() {
 		Individual newIndividual = new Individual();
 		for (int i = 0; i < program.size(); i++) {
@@ -173,6 +227,7 @@ public class Individual implements Serializable {
 	}
 
 	public void print() {
+		
 		if (sizeOverride == true) {
 			System.out.println(" [Individual not constructed]");
 		} else {
@@ -214,6 +269,13 @@ public class Individual implements Serializable {
 		return unseenDataOutputs;
 	}
 
+	public double[] getTrainingErrorVector() {
+		return trainingErrorVector;
+	}
+
+	public double[] getUnseenErrorVector() {
+		return unseenErrorVector;
+	}
 	public long getId() {
 		return id;
 	}
