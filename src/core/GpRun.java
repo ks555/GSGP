@@ -83,7 +83,12 @@ public class GpRun implements Serializable {
 		}
 
 		updateCurrentBest();
-		printState();
+		
+		//Added by KS
+		if(!(this instanceof EsgsgpRun)){	
+			printState();
+		}
+
 		currentGeneration++;
 	}
 
