@@ -23,10 +23,10 @@ public class GsgpRun extends GpRun {
 		super.initialize();
 		applyDepthLimit = false;
 		mutationStep = 1.0;
-		//boundedMutation = false;
+		boundedMutation = false;
 		//boundedMutation = true;
-		//buildIndividuals = true;
-		buildIndividuals = false;
+		buildIndividuals = true;
+		//buildIndividuals = false;
 	}
 
 	protected Individual applyStandardCrossover(Individual p1, Individual p2) {
@@ -118,6 +118,7 @@ public class GsgpRun extends GpRun {
 			double randomTreeValue = Utils.logisticFunction(randomTreeSemantics[i]);
 			offspringSemantics[i] = (parent1Semantics[i] * randomTreeValue)
 					+ ((1.0 - randomTreeValue) * parent2Semantics[i]);
+
 		}
 		return offspringSemantics;
 	}
