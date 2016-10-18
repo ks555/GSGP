@@ -25,7 +25,7 @@ public class MIndividual extends Individual {
 	protected int maximumDepthAchieved;
 	protected int depthCalculationIndex;
 	protected int printIndex;
-	protected int minDistance;
+	
 
 	protected boolean sizeOverride;
 	protected int computedSize;
@@ -33,7 +33,7 @@ public class MIndividual extends Individual {
 	public MIndividual() {
 		programs = new ArrayList <Individual>();
 		id = getNextId();
-		minDistance=100;
+		
 	}
 
 	protected static long getNextId() {
@@ -50,23 +50,11 @@ public class MIndividual extends Individual {
 		//for each program, add error vector to trainingErrorVectors
 		//calc theta using trainingErrorVectors			
 		for(int i=0;i<numPrograms;i++){
-			//calc theta?
 			
 			trainingErrorVectors[i]=this.getProgram(i).evaluateErrorVectorOnTrainingData(data);
 		}
 		
-		evaluateTrainingTheta(trainingErrorVectors);
-		
-//		if(trainingTheta<=0.07){
-////			for(int i = 0;i<programs.get(0).getTrainingDataOutputs().length;i++){
-////				System.out.println("First ind output " + i +": "+ programs.get(0).getTrainingDataOutputs()[i]);
-////				System.out.println("Second ind: " + programs.get(1).getTrainingDataOutputs()[i]);
-////							
-////			}
-//			
-//			System.out.println("Id " + programs.get(0).getId() + " and ID " + programs.get(1).getId() + " are the same");
-//		}
-//		
+		evaluateTrainingTheta(trainingErrorVectors);		
 	}
 	
 	public void evaluateUnseenTheta(Data data) {
@@ -82,28 +70,48 @@ public class MIndividual extends Individual {
 	}
 	
 	public void evaluateTrainingTheta(double[][] errorVector) {
-		double dotProd=0;
-		double normA=0;
-		double normB=0;
+		
+		double dotProd;
+		double normA;
+		double normB;
 		
 		if (numPrograms == 2){
 			dotProd = dot(errorVector[0], errorVector[1]);
 			
 			normA = magnitude(errorVector[0]); 			
 			normB = magnitude(errorVector[1]);
-//			
-//			System.out.println("Dot product "+dotProd);
-//			System.out.println("Norm A "+normA);
-//			System.out.println("Norm B "+normB);
-//			System.out.println("temp "+dotProd/(normA*normB)+"\n");
-		}	
+
+		}
 		
+		else{
+			dotProd=0;
+			normA=1;
+			normB=1;
+		}		
 
 		trainingTheta = Math.acos(dotProd/(normA*normB));
 	}
 	
 	public void evaluateUnseenTheta(double[][] errorVector) {
+		
+		double dotProd;
+		double normA;
+		double normB;
+		
+		if (numPrograms == 2){
+			
+			dotProd = dot(errorVector[0], errorVector[1]);			
+			normA = magnitude(errorVector[0]); 			
+			normB = magnitude(errorVector[1]);
 
+		}	
+		else{
+			dotProd=0;
+			normA=1;
+			normB=1;
+		}
+		
+		unseenTheta = Math.acos(dotProd/(normA*normB));
 		
 	}
 		
@@ -154,42 +162,58 @@ public class MIndividual extends Individual {
     public double magnitude(double[] vector) {
         return Math.sqrt(dot(vector,vector));
     }
+    
+    
+    public double calcDistances(Individual newInd, int j){
 
-//    // return the Euclidean distance between this and that
-//    public double distanceTo(Vector that) {
-//        if (this.length() != that.length())
-//            throw new IllegalArgumentException("Dimensions disagree");
-//        return this.minus(that).magnitude();
-//    }
-//
-//    // return this + that
-//    public Vector plus(Vector that) {
-//        if (this.length() != that.length())
-//            throw new IllegalArgumentException("Dimensions disagree");
-//        Vector c = new Vector(n);
-//        for (int i = 0; i < n; i++)
-//            c.data[i] = this.data[i] + that.data[i];
-//        return c;
-//    }	
-    public boolean calcDistances(Individual newInd, int i){
-        double [] ioutputs = newInd.getTrainingDataOutputs();
-        boolean flag = true;
-    	for (int j=i-1;j<numPrograms;j++){		
-    		double [] joutputs = this.getProgram(j).getTrainingDataOutputs();
-    		if (calculateEuclideanDistance(joutputs, ioutputs)<minDistance){
-    			flag=false;
-    		}
-    	}
-    	return flag;
+	        double [] joutputs = newInd.getTrainingDataOutputs();
+	        double [] koutputs = this.getProgram(0).getTrainingDataOutputs();
+	        double distance=calculateEuclideanDistance(koutputs, joutputs);
+	        
+	    	for (int k=1;k<j;k++){	
+	    		
+	    		koutputs = this.getProgram(k).getTrainingDataOutputs();    		
+	    		double temp = calculateEuclideanDistance(koutputs, joutputs);
+	    		if (temp<distance){
+	    			distance=temp;
+	    			}
+	    		
+	    	}
+    	
+    	
+    	return distance;
     }
+    
+    public double calcDistances(){
 
-	protected double calculateEuclideanDistance(double[] joutputs, double[] ioutputs) {
+        double [] ioutputs = this.getProgram(0).getTrainingDataOutputs();
+        double [] joutputs = this.getProgram(1).getTrainingDataOutputs();
+        double distance=calculateEuclideanDistance(ioutputs, joutputs);
+        
+        for(int i=2; i<numPrograms; i++){
+        	  for(int j=i + 1; j<numPrograms; j++){
+        		  ioutputs = this.getProgram(i).getTrainingDataOutputs();
+        		  joutputs = this.getProgram(j).getTrainingDataOutputs();
+  	    		double temp = calculateEuclideanDistance(ioutputs, joutputs);
+  	    		if (temp<distance){
+  	    			distance=temp;
+  	    			}
+        	  }
+        	}
+        	
+	
+	return distance;
+}
+
+	protected double calculateEuclideanDistance(double[] koutputs, double[] joutputs) {
 		double sum = 0.0;
-		for (int i = 0; i < joutputs.length; i++) {
+		for (int i = 0; i < koutputs.length; i++) {
 			
-			sum += Math.pow(joutputs[i] - ioutputs[i], 2.0);
+			sum += Math.pow(koutputs[i] - joutputs[i], 2.0);
+		
 		}
-		return Math.sqrt(sum / joutputs.length);
+		
+		return Math.sqrt(sum);
 	}
 //	// ##### get's and set's from here on #####
 	
