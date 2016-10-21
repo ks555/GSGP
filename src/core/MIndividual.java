@@ -1,6 +1,12 @@
 package core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 import java.math.*;
 
@@ -15,11 +21,11 @@ public class MIndividual extends Individual {
 	protected long id;
 	protected ArrayList<Individual> programs;
 	protected int depth;
-	protected double trainingErrorAvg,unseenErrorAvg;
 	protected double[][] trainingErrorVectors =  new double[numPrograms][];
 	protected double [][] unseenErrorVectors =  new double[numPrograms][];
 	protected double trainingTheta,unseenTheta;
 	protected double reconTrainingError,reconUnseenError;
+	protected double minDistance;
 
 	protected int evaluateIndex;
 	protected int maximumDepthAchieved;
@@ -43,7 +49,12 @@ public class MIndividual extends Individual {
 	public void evaluate(Data data) {
 		evaluateTrainingTheta(data);
 		evaluateUnseenTheta(data);
-		
+		double[] reconstructedTrainingOutput = reconstructTrainingSemantics();
+		double[] reconstructedUnseenOutput = reconstructUnseenSemantics();
+		double[][] trainingData = data.getTrainingData();
+		double[][] unseenData = data.getUnseenData();
+		reconTrainingError=calculateRMSE(trainingData, reconstructedTrainingOutput);
+		reconUnseenError=calculateRMSE(unseenData, reconstructedUnseenOutput);
 	}	
 	
 	public void evaluateTrainingTheta(Data data) {
@@ -52,6 +63,24 @@ public class MIndividual extends Individual {
 		for(int i=0;i<numPrograms;i++){
 			
 			trainingErrorVectors[i]=this.getProgram(i).evaluateErrorVectorOnTrainingData(data);
+			
+			//for each program, print to outputs run, gen, i, EVT, EVU, OVT, OVU
+			//!!!this is messy (file name in two places, doesnt print great) just for testing right now
+			File outputs = new File("results/mindividuals/outputs.txt");
+	      
+	        // Writes the content to the file
+	        try {
+	    	  FileWriter writer = new FileWriter(outputs,true); 
+			  writer.write("\n"+Main.CURRENTRUN+";"+getId()+
+					  ";"+i+";"+ Arrays.toString(trainingErrorVectors[i])+";"+Arrays.toString(getProgram(i).getTrainingDataOutputs()));
+		      writer.flush();
+		      writer.close();		      
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		
 		}
 		
 		evaluateTrainingTheta(trainingErrorVectors);		
@@ -63,6 +92,22 @@ public class MIndividual extends Individual {
 		for(int i=0;i<numPrograms;i++){
 			//calc theta
 			unseenErrorVectors[i]=this.getProgram(i).evaluateErrorVectorOnUnseenData(data);
+			
+			
+			//for each program, print to outputs run, gen, i, EVT, EVU, OVT, OVU
+			File outputs = new File("results/mindividuals/outputs.txt");
+	      
+//	        // Writes the content to the file
+//	        try {
+//	    	  FileWriter writer = new FileWriter(outputs,true); 
+//			  writer.write(","+Arrays.toString(unseenErrorVectors[i])+","+Arrays.toString(this.getProgram(i).getUnseenDataOutputs()));
+//		      writer.flush();
+//		      writer.close();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+
 		}
 		
 		evaluateUnseenTheta(unseenErrorVectors);
@@ -76,11 +121,9 @@ public class MIndividual extends Individual {
 		double normB;
 		
 		if (numPrograms == 2){
-			dotProd = dot(errorVector[0], errorVector[1]);
-			
+			dotProd = dot(errorVector[0], errorVector[1]);			
 			normA = magnitude(errorVector[0]); 			
 			normB = magnitude(errorVector[1]);
-
 		}
 		
 		else{
@@ -90,6 +133,8 @@ public class MIndividual extends Individual {
 		}		
 
 		trainingTheta = Math.acos(dotProd/(normA*normB));
+		trainingTheta =Math.toDegrees(trainingTheta);
+
 	}
 	
 	public void evaluateUnseenTheta(double[][] errorVector) {
@@ -112,29 +157,15 @@ public class MIndividual extends Individual {
 		}
 		
 		unseenTheta = Math.acos(dotProd/(normA*normB));
+		unseenTheta =Math.toDegrees(unseenTheta);
 		
 	}
 		
-	public void evaluateTrainingError() {
-		double temp = 0;
-		for(int i=0;i<numPrograms;i++){
-			temp+=this.getProgram(i).getTrainingError();			
-		}
-		trainingErrorAvg=temp/2;
 
-	}
-	
-	public void evaluateUnseenError() {
-		double temp = 0;
-		for(int i=0;i<numPrograms;i++){
-			temp+=this.getProgram(i).getUnseenError();			
-		}
-		unseenErrorAvg=temp/2;
-	}
 
 	public void addProgramAtIndex(Individual program, int index) {
 		programs.add(index, program);
-}
+	}
 	
 	public void print() {
 		
@@ -147,23 +178,19 @@ public class MIndividual extends Individual {
 //			printInner();
 		}
 	}
-
-    // return the inner product of vectors a and b
-    public double dot(double[] vectorOne, double[] vectorTwo) {
-//        if (vectorOne.length != vectorTwo.length)
-//            throw new IllegalArgumentException("Dimensions disagree for angle calculation");
-        double sum = 0.0;
-        for (int i = 0; i < vectorOne.length; i++)
-            sum = sum + (vectorOne[i] * vectorTwo[i]);
-        return sum;
-    }
-    
-    // return the Euclidean norm of this Vector
-    public double magnitude(double[] vector) {
-        return Math.sqrt(dot(vector,vector));
-    }
-    
-    
+	
+	   protected void output2(int currentGeneration, File file2)throws IOException{
+		   //"CurrentRun,Generation,ID,trainingTheta,UnseenTheta,reconTrainingError,reconUnseenError,LowestDistance"
+		      FileWriter writer = new FileWriter(file2,true); 
+		      // Writes the content to the file
+		      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+this.getId()+
+		    		  ","+ this.getTrainingTheta()+","+this.getUnseenTheta()+","+this.getReconTrainingError()+
+		    		  ","+this.getReconUnseenError()+","+this.minDistance);
+		      writer.flush();
+		      writer.close();	  
+		   
+	}
+     
     public double calcDistances(Individual newInd, int j){
 
 	        double [] joutputs = newInd.getTrainingDataOutputs();
@@ -176,11 +203,9 @@ public class MIndividual extends Individual {
 	    		double temp = calculateEuclideanDistance(koutputs, joutputs);
 	    		if (temp<distance){
 	    			distance=temp;
-	    			}
-	    		
-	    	}
-    	
-    	
+	    			}	    		
+	    	}  
+	    minDistance = distance;    	
     	return distance;
     }
     
@@ -199,11 +224,10 @@ public class MIndividual extends Individual {
   	    			distance=temp;
   	    			}
         	  }
-        	}
-        	
-	
-	return distance;
-}
+        	}        	
+        minDistance = distance; 
+		return distance;
+	}
 
 	protected double calculateEuclideanDistance(double[] koutputs, double[] joutputs) {
 		double sum = 0.0;
@@ -215,19 +239,75 @@ public class MIndividual extends Individual {
 		
 		return Math.sqrt(sum);
 	}
+	
+	public double[] reconstructTrainingSemantics(){
+		//!!!change these functions to deal with N expressions
+		double[] reconstructedTrainingSemantics = new double[trainingErrorVectors[0].length];	
+		double[] programOneSemantics = trainingErrorVectors[0];
+		double[] programTwoSemantics = trainingErrorVectors[1];
+		double k = this.getK(programOneSemantics,programTwoSemantics);
+		for (int i = 0; i < programOneSemantics.length; i++) {
+			reconstructedTrainingSemantics[i] = 1/(1-k)*programOneSemantics[i]-1/(1-k)*programTwoSemantics[i];
+		}		
+		
+		return reconstructedTrainingSemantics;
+	}	
+	
+	public double[] reconstructUnseenSemantics(){
+		//!!!change these functions to deal with N expressions
+		double[] reconstructedUnseenSemantics = new double[unseenErrorVectors[0].length];	
+		double[] programOneSemantics = unseenErrorVectors[0];
+		double[] programTwoSemantics = unseenErrorVectors[1];
+		double k = this.getK(programOneSemantics,programTwoSemantics);
+		for (int i = 0; i < programOneSemantics.length; i++) {
+			reconstructedUnseenSemantics[i] = 1/(1-k)*programOneSemantics[i]-1/(1-k)*programTwoSemantics[i];
+		}			
+		return reconstructedUnseenSemantics;
+	}	
+	
+	public double getK(double[]oneSemantics,double[]twoSemantics){
+		double[] ratios=new double[oneSemantics.length];
+		double k;
+		for (int i=0;i<oneSemantics.length;i++){
+			ratios[i]=oneSemantics[i]/twoSemantics[i];
+		}
+		//get median
+		if (ratios.length % 2 == 0)
+		    k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
+		else
+		    k = (double) ratios[ratios.length/2];
+		return k;
+	}
+	
+	protected double calculateRMSE(double[][] data, double[] outputs) {
+		double errorSum = 0.0;
+		for (int i = 0; i < data.length; i++) {
+			double target = data[i][data[0].length - 1];
+			errorSum += Math.pow(outputs[i] - target, 2.0);
+		}
+		return Math.sqrt(errorSum / data.length);
+	}
+	
+    // return the inner product of vectors a and b
+    public double dot(double[] vectorOne, double[] vectorTwo) {
+//        if (vectorOne.length != vectorTwo.length)
+//            throw new IllegalArgumentException("Dimensions disagree for angle calculation");
+        double sum = 0.0;
+        for (int i = 0; i < vectorOne.length; i++)
+            sum = sum + (vectorOne[i] * vectorTwo[i]);
+        return sum;
+    }
+    
+    // return the Euclidean norm of this Vector
+    public double magnitude(double[] vector) {
+        return Math.sqrt(dot(vector,vector));
+    }
+    
 //	// ##### get's and set's from here on #####
 	
 
 
-	public double getTrainingError() {
 
-		return trainingErrorAvg;
-	}
-
-	public double getUnseenError() {
-		
-		return unseenErrorAvg;
-	}
 	
 	public double getTrainingTheta() {
 		
