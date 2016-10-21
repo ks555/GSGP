@@ -1,10 +1,13 @@
 package core;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import core.MIndividual;
 
+import java.io.File;
+import java.io.FileWriter;
 
 public class EsgsgpRun extends GsgpRun {
 
@@ -17,19 +20,23 @@ public class EsgsgpRun extends GsgpRun {
 	protected MPopulation mpopulation;
 	protected int numPrograms;
 	protected MIndividual currentMBest;
+	protected double minDistance;
+	
+	File file = new File("results/results.txt");
+	File file2 = new File("results/population.txt");
+	File OutputsFile = new File("results/mindividuals/outputs.txt");
 
 	public EsgsgpRun(Data data) {
-		super(data);
-		
+		super(data);		
 	}
-
 
 	protected void initialize() {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
+		minDistance=10000;
 		
-		for (int i = 0; i <  2; i++) {
+		for (int i = 0; i <  numPrograms; i++) {
 			
 			super.initialize();
 			
@@ -42,30 +49,50 @@ public class EsgsgpRun extends GsgpRun {
 			MIndividual mindividual = new MIndividual();
 			
 			for (int j = 0; j < numPrograms; j++) {
-				mindividual.addProgramAtIndex(populations.get(j).getIndividual(i),j);			
-//				System.out.println("Initialized Individual " + i + ":" + j + " ID: " + populations.get(j).getIndividual(i).getId()
-//						+ "\n" + "Training Error: " + populations.get(j).getIndividual(i).trainingError 
-//						+ "\n" + "Unseen Error: " + populations.get(j).getIndividual(i).unseenError);					
+				
+				if (j==0){
+					mindividual.addProgramAtIndex(populations.get(j).getIndividual(i),j);
+				}
+				else{
+					
+					//for j > 0, check distance of expression from all expressions previously added to mindividual.
+					//parameters are 'candidate' individual and j, the index it is to be added to mindividual at
+					double distance = mindividual.calcDistances(populations.get(j).getIndividual(i), j);
+					Individual ind = populations.get(j).getIndividual(i);
+					while(distance<minDistance){							
+						ind = grow(this.getMaximumDepth());
+						ind.evaluate(data);
+						distance=mindividual.calcDistances(ind, j);									
+					}
+					mindividual.addProgramAtIndex(ind,j);
+				}
 			}
-			mindividual.evaluate();
-			mpopulation.addIndividual(mindividual);			
-//			System.out.println("Mindividual Error Averages for ID: " + mindividual.getId()+"\nTraining Error " 
-//			+ mindividual.getTrainingError() + "\nUnseen Error Total " + mindividual.getUnseenError()+"\n");
+				
+			mindividual.evaluate(data);
+			mpopulation.addIndividual(mindividual);	
 			
-		}
-	
-		applyDepthLimit = false;
-		mutationStep = 1.0;
-		//boundedMutation = false;
-		boundedMutation = true;
-		//buildIndividuals = true;
-		buildIndividuals = false;
+			
+		}	
 		
-		
-		
+		updateCurrentMBest();
+		//Not printing Generation 0 because will be listed as Generation 1 as generation has already been incremented
+		printMPopState();
 	}
 
-	public void evolve(int numberOfGenerations) {
+	public void printFirstGen(){
+		for (int i = 0; i < mpopulation.getSize(); i++) {
+			//print to each mindividual output2, (population.txt)
+			try {
+				mpopulation.getMIndividual(i).output2(0, file2);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void evolve(int numberOfGenerations) throws IOException {
+		
 
 		// evolve for a given number of generations
 		while (currentGeneration <= numberOfGenerations) {
@@ -80,11 +107,18 @@ public class EsgsgpRun extends GsgpRun {
 				if (randomGenerator.nextDouble() < crossoverProbability) {
 					MIndividual mp2 = selectMParent();
 					newIndividual = applyStandardCrossover(mp1, mp2);
-					
+					//check distances between programs in newIndividual, keep reselecting mp2 and redoing crossover until distances are high enough
+					while(newIndividual.calcDistances()<minDistance){
+						mp2 = selectMParent();
+						newIndividual = applyStandardCrossover(mp1, mp2);
+					}					
 				}
 				// apply mutation
 				else {
 					newIndividual = applyStandardMutation(mp1);
+					while(newIndividual.calcDistances()<minDistance){
+						newIndividual = applyStandardMutation(mp1);
+					}
 				}
 
 				/*
@@ -102,11 +136,12 @@ public class EsgsgpRun extends GsgpRun {
 					newIndividual = mp1;
 				} else {
 					for (int i=0; i<numPrograms; i++){
+						//evaluate each program in the individual
 						newIndividual.getProgram(i).evaluate(data);
 						
 					}
 					//System.out.println("Offspring first program training error " +newIndividual.getProgram(0).getTrainingError());
-					newIndividual.evaluate();
+					newIndividual.evaluate(data);
 				}
 				offspring.addIndividual(newIndividual);
 				//System.out.println("offspring training " +newIndividual.getTrainingError()+"\n");
@@ -116,6 +151,7 @@ public class EsgsgpRun extends GsgpRun {
 			
 			updateCurrentMBest();
 			printMPopState();
+			output();
 			currentGeneration++;
 		}
 	}
@@ -123,8 +159,11 @@ public class EsgsgpRun extends GsgpRun {
 	protected void printMPopState() {
 		if (printAtEachGeneration) {
 			System.out.println("\nGeneration:\t\t" + currentGeneration);
-			System.out.printf("Training error:\t\t%.2f\nUnseen error:\t\t%.2f\n",
-					currentMBest.getTrainingError(), currentMBest.getUnseenError());
+			System.out.printf("Training Theta:\t\t%.2f\nUnseen Theta:\t\t%.2f\nReconstructed Training Error:"
+					+ "\t\t%.2f\nReconstructed Unseen Error:\t\t%.2f\n",
+					currentMBest.getTrainingTheta(), currentMBest.getUnseenTheta(), currentMBest.getReconTrainingError(),
+					currentMBest.getReconUnseenError());
+			
 		}
 	}
 	
@@ -162,15 +201,12 @@ public class EsgsgpRun extends GsgpRun {
 				
 			if (buildIndividuals) {
 				pOffspring = buildCrossoverIndividual(p1, p2);
-				
 				offspring.addProgramAtIndex(pOffspring, i);
 			}
 			else {
 				pOffspring = buildCrossoverSemantics(p1, p2);
-				
 				offspring.addProgramAtIndex(pOffspring,i);
-			}	
-			
+				}			
 			
 		}	
 		//print
@@ -178,21 +214,24 @@ public class EsgsgpRun extends GsgpRun {
 //		System.out.println("P1 training error " + mp1.getTrainingError());
 //		System.out.println("P2 training error " + mp2.getTrainingError());
 		
-		
-		
 		return offspring;
 	}
 
 	
-
-
+	
 	protected MIndividual applyStandardMutation(MIndividual mp) {
+		
 		MIndividual offspring = new MIndividual();
+		
 		for(int i=0; i<mp.getNumPrograms(); i++){
 			if (buildIndividuals) {
+
 				offspring.addProgramAtIndex(buildMutationIndividual(mp.getProgram(i)),i);
-			} else {
+				
+			} else {				
+	
 				offspring.addProgramAtIndex(buildMutationSemantics(mp.getProgram(i)),i);
+				
 			}
 		}
 		
@@ -206,13 +245,12 @@ public class EsgsgpRun extends GsgpRun {
 		MPopulation survivors = new MPopulation();
 		MIndividual bestParent = mpopulation.getBestM();
 		MIndividual bestNewIndividual = newIndividuals.getBestM();
-		MIndividual bestOverall;
-		
+		MIndividual bestOverall;	
 		
 
 		// the best overall is in the current population
 		if (bestParent.getTrainingError() < bestNewIndividual.getTrainingError()) {
-			//System.out.println("Best parent" +bestParent.getTrainingError());
+			
 			bestOverall = bestParent;
 		}
 		// the best overall is in the offspring population
@@ -222,10 +260,17 @@ public class EsgsgpRun extends GsgpRun {
 		}
 
 		survivors.addIndividual(bestOverall);
-		//System.out.println("Best overall" +bestOverall.getTrainingError());
+
 		for (int i = 0; i < newIndividuals.getSize(); i++) {
 			if (newIndividuals.getMIndividual(i).getId() != bestOverall.getId()) {
 				survivors.addIndividual(newIndividuals.getMIndividual(i));
+				//print to new individual to output2, population
+				try {
+					newIndividuals.getMIndividual(i).output2(currentGeneration, file2);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 		//System.out.print("Survivors best: " + survivors.getBestM().getTrainingError());
@@ -237,6 +282,51 @@ public class EsgsgpRun extends GsgpRun {
 		currentMBest = mpopulation.getBestM();
 	}
 
+
+   protected void createOutputFile()throws IOException{
+	      
+	      // creates the file
+	      file.createNewFile();
+	      file2.createNewFile();
+	      OutputsFile.createNewFile();
+	   // creates a FileWriter Object
+	      FileWriter writer = new FileWriter(file); 
+	      // Writes the content to the file
+	      writer.write("CurrentRun,Generation,NumGens,NumRuns,popSize,trainingTheta,UnseenTheta,reconTrainError,reconTrainingError,reconUnseenError"); 
+	      writer.flush();
+	      writer.close();
+	   // creates a FileWriter Object
+	      FileWriter writer2 = new FileWriter(file2); 
+	      // Writes the content to the file
+	      writer2.write("CurrentRun,Generation,ID,trainingTheta,UnseenTheta,reconTrainingError,reconUnseenError,LowestDistance"); 
+	      writer2.flush();
+	      writer2.close();
+	   // creates a FileWriter Object
+	      FileWriter writer3 = new FileWriter(OutputsFile); 
+	      // Writes the content to the file
+	      writer3.write("CurrentRun;ID;ExpressionNum;TrainingErrorVector;TrainingOutputVector"); 
+	      writer3.flush();
+	      writer3.close();
+	   }	
+	
+
+   protected void output()throws IOException{
+
+	      FileWriter writer = new FileWriter(file,true); 
+	      // Writes the content to the file
+	      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+Main.NUMBER_OF_GENERATIONS+","+Main.NUMBER_OF_RUNS+
+	    		  ","+populationSize+currentMBest.getTrainingTheta()+","+currentMBest.getUnseenTheta()+","+currentMBest.getReconTrainingError()+
+	    		  ","+currentMBest.getReconUnseenError()+
+	    		  ","+currentBest.getDepth() + ","+","+applyDepthLimit+","+maximumDepth+
+	    		  ","+crossoverProbability); 
+	      writer.flush();
+	      writer.close();	      
+	   
+   }
+   
+
+	
+	
 	// ##### get's and set's from here on #####
 	public MIndividual getCurrentMBest() {
 		return currentMBest;
@@ -244,7 +334,9 @@ public class EsgsgpRun extends GsgpRun {
 	public double getMutationStep() {
 		return mutationStep;
 	}
-
+	public File getOutputsFileName() {
+		return OutputsFile;
+	}
 	public void setMutationStep(double mutationStep) {
 		this.mutationStep = mutationStep;
 	}
