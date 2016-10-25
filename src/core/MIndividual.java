@@ -1,5 +1,5 @@
 package core;
-
+import core.GpRun;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -32,13 +32,15 @@ public class MIndividual extends Individual {
 	protected int depthCalculationIndex;
 	protected int printIndex;
 	
-
+	protected MIndividual mp1;
+	protected MIndividual mp2;
 	protected boolean sizeOverride;
 	protected int computedSize;
 
 	public MIndividual() {
 		programs = new ArrayList <Individual>();
 		id = getNextId();
+		
 		
 	}
 
@@ -67,14 +69,17 @@ public class MIndividual extends Individual {
 			//for each program, print to outputs run, gen, i, EVT, EVU, OVT, OVU
 			//!!!this is messy (file name in two places, doesnt print great) just for testing right now
 			File outputs = new File("results/mindividuals/outputs.txt");
-	      
+			
 	        // Writes the content to the file
+			//!!WHY IS THIS NOT WRITING THE FIRST GENERATION?? EVEN THOUGH THE TRY CLAUSE IS ENTERED???
 	        try {
 	    	  FileWriter writer = new FileWriter(outputs,true); 
+	    	  //System.out.println("trainin output id " +getId()+" program " +i+" " +Arrays.toString(getProgram(i).getTrainingDataOutputs()));
 			  writer.write("\n"+Main.CURRENTRUN+";"+getId()+
 					  ";"+i+";"+ Arrays.toString(trainingErrorVectors[i])+";"+Arrays.toString(getProgram(i).getTrainingDataOutputs()));
 		      writer.flush();
-		      writer.close();		      
+		      writer.close();	
+		     
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -182,12 +187,34 @@ public class MIndividual extends Individual {
 	   protected void output2(int currentGeneration, File file2)throws IOException{
 		   //"CurrentRun,Generation,ID,trainingTheta,UnseenTheta,reconTrainingError,reconUnseenError,LowestDistance"
 		      FileWriter writer = new FileWriter(file2,true); 
-		      // Writes the content to the file
-		      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+this.getId()+
-		    		  ","+ this.getTrainingTheta()+","+this.getUnseenTheta()+","+this.getReconTrainingError()+
-		    		  ","+this.getReconUnseenError()+","+this.minDistance);
-		      writer.flush();
-		      writer.close();	  
+		      
+		      if (currentGeneration==0){
+			      // Writes the content to the file
+			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+","+
+			    		  ","+getProgram(0).getTrainingError()+","+getProgram(0).getUnseenError()+","+getProgram(1).getTrainingError()+","+ getProgram(1).getUnseenError()+
+			    		  ","+ getTrainingTheta()+","+getUnseenTheta()+","+getReconTrainingError()+
+			    		  ","+getReconUnseenError()+","+minDistance);
+			      writer.flush();
+			      writer.close();	  
+		      }
+		      else if(mp2==null){
+			      // Writes the content to the file
+			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+mp1.getId()+","+
+			    		  ","+getProgram(0).getTrainingError()+","+getProgram(0).getUnseenError()+","+getProgram(1).getTrainingError()+","+ getProgram(1).getUnseenError()+
+			    		  ","+ getTrainingTheta()+","+getUnseenTheta()+","+getReconTrainingError()+
+			    		  ","+getReconUnseenError()+","+minDistance);
+			      writer.flush();
+			      writer.close();	
+		      }
+		      else{
+			      // Writes the content to the file
+			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+mp1.getId()+","+mp2.getId()+
+			    		  ","+getProgram(0).getTrainingError()+","+getProgram(0).getUnseenError()+","+getProgram(1).getTrainingError()+","+ getProgram(1).getUnseenError()+
+			    		  ","+getTrainingTheta()+","+getUnseenTheta()+","+getReconTrainingError()+
+			    		  ","+getReconUnseenError()+","+minDistance);
+			      writer.flush();
+			      writer.close();	
+		      }
 		   
 	}
      
@@ -195,7 +222,7 @@ public class MIndividual extends Individual {
 
 	        double [] joutputs = newInd.getTrainingDataOutputs();
 	        double [] koutputs = this.getProgram(0).getTrainingDataOutputs();
-	        double distance=calculateEuclideanDistance(koutputs, joutputs);
+	        double distance = calculateEuclideanDistance(koutputs, joutputs);
 	        
 	    	for (int k=1;k<j;k++){	
 	    		
@@ -205,7 +232,8 @@ public class MIndividual extends Individual {
 	    			distance=temp;
 	    			}	    		
 	    	}  
-	    minDistance = distance;    	
+	    minDistance = 1-1/(1+distance);    	
+	    System.out.println(minDistance);
     	return distance;
     }
     
@@ -225,7 +253,8 @@ public class MIndividual extends Individual {
   	    			}
         	  }
         	}        	
-        minDistance = distance; 
+        minDistance =  1-1/(1+distance);
+        System.out.println(minDistance);
 		return distance;
 	}
 
@@ -241,13 +270,13 @@ public class MIndividual extends Individual {
 	}
 	
 	public double[] reconstructTrainingSemantics(){
-		//!!!change these functions to deal with N expressions
-		double[] reconstructedTrainingSemantics = new double[trainingErrorVectors[0].length];	
-		double[] programOneSemantics = trainingErrorVectors[0];
-		double[] programTwoSemantics = trainingErrorVectors[1];
-		double k = this.getK(programOneSemantics,programTwoSemantics);
+		//!!!change these functions to deal with N expressions	
+		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
+		double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();
+		double[] reconstructedTrainingSemantics = new double[programOneSemantics.length];
+		double k = getK(programOneSemantics,programTwoSemantics);
 		for (int i = 0; i < programOneSemantics.length; i++) {
-			reconstructedTrainingSemantics[i] = 1/(1-k)*programOneSemantics[i]-1/(1-k)*programTwoSemantics[i];
+			reconstructedTrainingSemantics[i] =  1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
 		}		
 		
 		return reconstructedTrainingSemantics;
@@ -256,8 +285,8 @@ public class MIndividual extends Individual {
 	public double[] reconstructUnseenSemantics(){
 		//!!!change these functions to deal with N expressions
 		double[] reconstructedUnseenSemantics = new double[unseenErrorVectors[0].length];	
-		double[] programOneSemantics = unseenErrorVectors[0];
-		double[] programTwoSemantics = unseenErrorVectors[1];
+		double[] programOneSemantics = getProgram(0).getUnseenDataOutputs();;
+		double[] programTwoSemantics = getProgram(1).getUnseenDataOutputs();
 		double k = this.getK(programOneSemantics,programTwoSemantics);
 		for (int i = 0; i < programOneSemantics.length; i++) {
 			reconstructedUnseenSemantics[i] = 1/(1-k)*programOneSemantics[i]-1/(1-k)*programTwoSemantics[i];
@@ -268,6 +297,7 @@ public class MIndividual extends Individual {
 	public double getK(double[]oneSemantics,double[]twoSemantics){
 		double[] ratios=new double[oneSemantics.length];
 		double k;
+		Arrays.sort(ratios);
 		for (int i=0;i<oneSemantics.length;i++){
 			ratios[i]=oneSemantics[i]/twoSemantics[i];
 		}
@@ -281,7 +311,7 @@ public class MIndividual extends Individual {
 	
 	protected double calculateRMSE(double[][] data, double[] outputs) {
 		double errorSum = 0.0;
-		for (int i = 0; i < data.length; i++) {
+		for (int i = 0; i < outputs.length; i++) {
 			double target = data[i][data[0].length - 1];
 			errorSum += Math.pow(outputs[i] - target, 2.0);
 		}
@@ -345,4 +375,10 @@ public class MIndividual extends Individual {
 		this.sizeOverride = sizeOverride;
 	}
 
+	public void setMp1(MIndividual p1) {
+		this.mp1 = p1;
+	}
+	public void setMp2(MIndividual p2) {
+		this.mp2 = p2;
+	}
 }
