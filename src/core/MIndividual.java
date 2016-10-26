@@ -199,6 +199,7 @@ public class MIndividual extends Individual {
 			      writer.close();	  
 		      }
 		      else if(mp2==null){
+		    	  System.out.println(mp1.getId());
 			      // Writes the content to the file
 			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+mp1.getId()+","+
 			    		  ","+getProgram(0).getTrainingError()+","+getProgram(0).getUnseenError()+","+getProgram(1).getTrainingError()+","+ getProgram(1).getUnseenError()+
@@ -281,13 +282,19 @@ public class MIndividual extends Individual {
 		calcRatios(programOneSemantics, programTwoSemantics);
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
-			if (ratios[i]<2){
+			System.out.println(ratios[i]);
+			if (Math.abs(ratios[i])>2){
+				
+			}
+			else{
 				check=true;
 			}
 		}
+		System.out.println(check);
 		return check;
 	} 
    //checks ratios between outputs of the two expressions.
+   //overloaded method, checks ratio of new expression to current expressions in MIndividual
    public boolean checkRatios(Individual ind, int j){
 		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
 		//WHEN MORE THAN TWO EXPRESSIONS, THIS WILL BE DIFFERENT - GET OUTPUTS OF EACH EXPRESSION (UP TO INDEX J-1), PLUS OUT PUT OF IND
@@ -296,10 +303,14 @@ public class MIndividual extends Individual {
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
 			System.out.println(ratios[i]);
-			if (Math.abs(ratios[i])<2){
+			if (Math.abs(ratios[i])>2){
+				
+			}
+			else{
 				check=true;
 			}
 		}
+		System.out.println(check);
 		return check;
 	} 
 	protected double calculateEuclideanDistance(double[] koutputs, double[] joutputs) {

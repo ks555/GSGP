@@ -34,7 +34,7 @@ public class EsgsgpRun extends GsgpRun {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
-		minDistance=0.99;
+		minDistance=0.0;
 		
 		for (int i = 0; i <  numPrograms; i++) {
 			
@@ -66,16 +66,14 @@ public class EsgsgpRun extends GsgpRun {
 						ind.evaluate(data);
 						//distance=mindividual.calcDistances(ind, j);	
 						check = mindividual.checkRatios(ind,  j);
-						System.out.println(check);
+						
 					}
 					mindividual.addProgramAtIndex(ind,j);
 				}
 			}
-			
-			//add ratio check here, set min distance to 0, can adjust the above distance check stuff if 
-			//we switch to the ratio check
-			
-			mindividual.evaluate(data);
+						
+			mindividual.evaluate(data);			
+			System.out.println("Adding "+mindividual.getId()+ " Ratio < 2: " + mindividual.checkRatios());
 			mpopulation.addIndividual(mindividual);			
 			
 		}	
@@ -156,7 +154,7 @@ public class EsgsgpRun extends GsgpRun {
 					
 					newIndividual.evaluate(data);
 				}
-				//System.out.println("Adding to offspring " +newIndividual.getId()+ " train theta " +  newIndividual.getTrainingTheta());
+				System.out.println("Adding "+newIndividual.getId()+ " Ratio < 2: " + newIndividual.checkRatios());
 				offspring.addIndividual(newIndividual);
 			}
 
@@ -275,6 +273,7 @@ public class EsgsgpRun extends GsgpRun {
 		}
 
 		survivors.addIndividual(bestOverall);
+		System.out.println("Adding "+bestOverall.getId()+ " Ratio < 2: " + bestOverall.checkRatios());
 		try {
 			bestOverall.output2(currentGeneration, file2);
 		} catch (IOException e) {
@@ -285,6 +284,7 @@ public class EsgsgpRun extends GsgpRun {
 		for (int i = 0; i < newIndividuals.getSize(); i++) {
 			if (newIndividuals.getMIndividual(i).getId() != bestOverall.getId()) {
 				survivors.addIndividual(newIndividuals.getMIndividual(i));
+				System.out.println("Adding "+newIndividuals.getMIndividual(i).getId()+ " Ratio < 2: " + newIndividuals.getMIndividual(i).checkRatios());
 				//print to new individual to output2, population
 				try {
 					newIndividuals.getMIndividual(i).output2(currentGeneration, file2);
