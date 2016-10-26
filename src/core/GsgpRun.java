@@ -23,10 +23,10 @@ public class GsgpRun extends GpRun {
 		super.initialize();
 		applyDepthLimit = false;
 		mutationStep = 1.0;
-		boundedMutation = false;
-		//boundedMutation = true;
-		buildIndividuals = true;
-		//buildIndividuals = false;
+		//boundedMutation = false;
+		boundedMutation = true;
+		//buildIndividuals = true;
+		buildIndividuals = false;
 	}
 
 	protected Individual applyStandardCrossover(Individual p1, Individual p2) {
@@ -102,7 +102,7 @@ public class GsgpRun extends GpRun {
 		double[] offspringUnseenSemantics = buildCrossoverOffspringSemantics(parent1UnseenSemantics,
 				parent2UnseenSemantics, randomTreeUnseenSemantics);
 		offspring.setUnseenDataOutputs(offspringUnseenSemantics);
-
+		
 		// calculate size and depth
 		offspring.setSizeOverride(true);
 		offspring.setComputedSize(calculateCrossoverOffspringSize(p1, p2, randomTree));

@@ -21,10 +21,11 @@ public class MPopulation extends Population {
 
 	public int getBestIndex() {
 		int bestIndex = 0;
-		double bestTrainingError = mindividuals.get(bestIndex).getTrainingError();
+		double bestTrainingTheta = mindividuals.get(bestIndex).getTrainingTheta();
 		for (int i = 1; i < mindividuals.size(); i++) {
-			if (mindividuals.get(i).getTrainingError() < bestTrainingError) {
-				bestTrainingError = mindividuals.get(i).getTrainingError();
+			if (mindividuals.get(i).getTrainingTheta() < bestTrainingTheta) {
+				bestTrainingTheta = mindividuals.get(i).getTrainingTheta();
+				//System.out.println("get best: id " + mindividuals.get(i).getId() + " training theta " + mindividuals.get(i).getTrainingTheta() );
 				bestIndex = i;
 			}
 		}

@@ -13,6 +13,10 @@ import programElements.ProgramElement;
 import programElements.ProtectedDivision;
 import programElements.Subtraction;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class GpRun implements Serializable {
 
 	private static final long serialVersionUID = 7L;
@@ -32,6 +36,8 @@ public class GpRun implements Serializable {
 	protected Population population;
 	protected Individual currentBest;
 
+	File file = new File("results/results.txt");
+	
 	public GpRun(Data data) {
 		this.data = data;
 		initialize();
@@ -84,7 +90,7 @@ public class GpRun implements Serializable {
 
 		updateCurrentBest();
 		
-		//Added by KS
+		//Added by KS for ESGSGP acceptable printing
 		if(!(this instanceof EsgsgpRun)){	
 			printState();
 		}
@@ -167,7 +173,7 @@ public class GpRun implements Serializable {
 		}
 	}
 
-	public void evolve(int numberOfGenerations) {
+	public void evolve(int numberOfGenerations) throws IOException {
 
 		// evolve for a given number of generations
 		while (currentGeneration <= numberOfGenerations) {
@@ -278,6 +284,7 @@ public class GpRun implements Serializable {
 		}
 
 		survivors.addIndividual(bestOverall);
+
 		for (int i = 0; i < newIndividuals.getSize(); i++) {
 			if (newIndividuals.getIndividual(i).getId() != bestOverall.getId()) {
 				survivors.addIndividual(newIndividuals.getIndividual(i));
@@ -290,6 +297,17 @@ public class GpRun implements Serializable {
 		currentBest = population.getBest();
 	}
 
+   protected void createOutputFile()throws IOException, IOException{
+	      
+	      // creates the file
+	      file.createNewFile();
+	      // creates a FileWriter Object
+	      FileWriter writer = new FileWriter(file); 
+	      // Writes the content to the file
+	      writer.write("CurrentRun,Generation,TrainingError,UnseenError,Size,Depth,ShuffleSplit,NumGens,NumRuns,popSize,DepthLimit,MaxDepth,CrossProb,MStep,BoundedM,functionSet,constantSet"); 
+	      writer.flush();
+	      writer.close();
+   }
 	// ##### get's and set's from here on #####
 
 	public Individual getCurrentBest() {

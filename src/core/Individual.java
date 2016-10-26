@@ -1,7 +1,10 @@
 package core;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import programElements.Constant;
 import programElements.InputVariable;
@@ -29,10 +32,13 @@ public class Individual implements Serializable {
 
 	protected boolean sizeOverride;
 	protected int computedSize;
-
+	
+	
+	
 	public Individual() {
 		program = new ArrayList<ProgramElement>();
 		id = getNextId();
+		
 	}
 
 	protected static long getNextId() {
@@ -50,6 +56,7 @@ public class Individual implements Serializable {
 			trainingDataOutputs = evaluate(trainingData);
 		}
 		trainingError = calculateRMSE(trainingData, trainingDataOutputs);
+		//System.out.println("trainin output id " +getId()+" " +Arrays.toString(getTrainingDataOutputs()));
 		return trainingDataOutputs;
 	}
 
@@ -70,7 +77,7 @@ public class Individual implements Serializable {
 		}
 		return outputs;
 	}
-
+	//Used when build individual is true
 	protected double evaluateInner(double[] dataInstance) {
 		if (program.get(evaluateIndex) instanceof InputVariable) {
 			InputVariable inputVariable = (InputVariable) program.get(evaluateIndex);
@@ -98,47 +105,31 @@ public class Individual implements Serializable {
 		return Math.sqrt(errorSum / data.length);
 	}
 
-	
 	//ADDED BY KRISTEN
 	//Methods for calculating error vectors
 	
-	//evaluateErrorVectors called from MIndividual initialize method
-	//MIndividual has vectors of error vectors (one for training, one for unseen)
-	//when Mindividual is initialized, error vector is calc for each program and added to 
-	//appropriate vector
-	//vector of error vectors is used to calc Theta (what if Mindividual is more than two vectors?)
-	//if build individual is set to false, output vector of offspring is set during crossover / mutation
-	//based on parent semantics/random tree semantics
-	public void evaluateErrorVector(Data data) {
-		evaluateErrorVectorOnTrainingData(data);
-		evaluateErrorVectorOnUnseenData(data);
-	}
-	
+	//calculates training error vector
+	//If size override set to false, output vector of offspring must be calculated
+	//otherwise, it has already been set during crossover / mutation based on parent semantics
 	public double[] evaluateErrorVectorOnTrainingData(Data data) {
 		double[][] trainingData = data.getTrainingData();
 		if (sizeOverride == false) {
 			trainingDataOutputs = evaluate(trainingData);
 		}
 		trainingErrorVector = calculateErrorVector(trainingData, trainingDataOutputs);
-		return trainingDataOutputs;
+		return trainingErrorVector;
 	}
-
+	//ADDED BY KRISTEN
+	//calculates unseen error vector
+	//If size override set to false, output vector of offspring must be calculated
+	//otherwise, it has already been set during crossover / mutation based on parent semantics
 	public double[] evaluateErrorVectorOnUnseenData(Data data) {
 		double[][] unseenData = data.getUnseenData();
 		if (sizeOverride == false) {
 			unseenDataOutputs = evaluate(unseenData);
 		}
 		unseenErrorVector = calculateErrorVector(unseenData, unseenDataOutputs);
-		return unseenDataOutputs;
-	}
-
-	public double[] evaluateErrorVector(double[][] data) {
-		double[] outputs = new double[data.length];
-		for (int i = 0; i < outputs.length; i++) {
-			evaluateIndex = 0;
-			outputs[i] = evaluateInner(data[i]);
-		}
-		return outputs;
+		return unseenErrorVector;
 	}
 	
 	//ADDED BY KRISTEN

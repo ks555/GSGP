@@ -72,11 +72,11 @@ public class MIndividual extends Individual {
 			
 	        // Writes the content to the file
 			//!!WHY IS THIS NOT WRITING THE FIRST GENERATION?? EVEN THOUGH THE TRY CLAUSE IS ENTERED???
+			///!!!PUT THIS PRINTING IN A METHOD!
 	        try {
 	    	  FileWriter writer = new FileWriter(outputs,true); 
-	    	  //System.out.println("trainin output id " +getId()+" program " +i+" " +Arrays.toString(getProgram(i).getTrainingDataOutputs()));
-			  writer.write("\n"+Main.CURRENTRUN+";"+getId()+
-					  ";"+i+";"+ Arrays.toString(trainingErrorVectors[i])+";"+Arrays.toString(getProgram(i).getTrainingDataOutputs()));
+			  writer.write("\n"+Main.CURRENTRUN+","+getId()+
+					  ","+i+","+ Arrays.toString(trainingErrorVectors[i]).replace("[","").replace("]", "")+","+Arrays.toString(getProgram(i).getTrainingDataOutputs()).replace("[","").replace("]", ""));
 		      writer.flush();
 		      writer.close();	
 		     
@@ -233,7 +233,6 @@ public class MIndividual extends Individual {
 	    			}	    		
 	    	}  
 	    minDistance = 1-1/(1+distance);    	
-	    System.out.println(minDistance);
     	return distance;
     }
     
@@ -254,7 +253,7 @@ public class MIndividual extends Individual {
         	  }
         	}        	
         minDistance =  1-1/(1+distance);
-        System.out.println(minDistance);
+        
 		return distance;
 	}
 
@@ -296,11 +295,11 @@ public class MIndividual extends Individual {
 	
 	public double getK(double[]oneSemantics,double[]twoSemantics){
 		double[] ratios=new double[oneSemantics.length];
-		double k;
-		Arrays.sort(ratios);
+		double k;		
 		for (int i=0;i<oneSemantics.length;i++){
 			ratios[i]=oneSemantics[i]/twoSemantics[i];
 		}
+		Arrays.sort(ratios);
 		//get median
 		if (ratios.length % 2 == 0)
 		    k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
@@ -333,6 +332,7 @@ public class MIndividual extends Individual {
         return Math.sqrt(dot(vector,vector));
     }
     
+  //  public String createStringFromArray()
 //	// ##### get's and set's from here on #####
 	
 

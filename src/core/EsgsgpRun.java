@@ -34,7 +34,7 @@ public class EsgsgpRun extends GsgpRun {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
-		minDistance=10000;
+		minDistance=0.99;
 		
 		for (int i = 0; i <  numPrograms; i++) {
 			
@@ -59,7 +59,8 @@ public class EsgsgpRun extends GsgpRun {
 					//parameters are 'candidate' individual and j, the index it is to be added to mindividual at
 					double distance = mindividual.calcDistances(populations.get(j).getIndividual(i), j);
 					Individual ind = populations.get(j).getIndividual(i);
-					while(distance<minDistance){							
+					while(distance<minDistance){	
+						//if distance is too small, replace ind with a new program
 						ind = grow(this.getMaximumDepth());
 						ind.evaluate(data);
 						distance=mindividual.calcDistances(ind, j);									
@@ -69,13 +70,12 @@ public class EsgsgpRun extends GsgpRun {
 			}
 				
 			mindividual.evaluate(data);
-			mpopulation.addIndividual(mindividual);	
-			
+			mpopulation.addIndividual(mindividual);			
 			
 		}	
 		
 		updateCurrentMBest();
-		//Not printing Generation 0 because will be listed as Generation 1 as generation has already been incremented
+		//!!!printing Generation 0 but will be listed as Generation 1 as generation has already been incremented
 		printMPopState();
 	}
 
@@ -88,12 +88,12 @@ public class EsgsgpRun extends GsgpRun {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 		}
 	}
 	
 	public void evolve(int numberOfGenerations) throws IOException {
 		
-
 		// evolve for a given number of generations
 		while (currentGeneration <= numberOfGenerations) {
 			MPopulation offspring = new MPopulation();
@@ -102,7 +102,7 @@ public class EsgsgpRun extends GsgpRun {
 			while (offspring.getSize() < population.getSize()) {
 				MIndividual mp1, newIndividual;
 				mp1 = selectMParent();
-
+				
 				// apply crossover to parents selected by tournament selection
 				if (randomGenerator.nextDouble() < crossoverProbability) {
 					MIndividual mp2 = selectMParent();
@@ -111,7 +111,9 @@ public class EsgsgpRun extends GsgpRun {
 					while(newIndividual.calcDistances()<minDistance){
 						mp2 = selectMParent();
 						newIndividual = applyStandardCrossover(mp1, mp2);
-					}					
+					}				
+					newIndividual.setMp2(mp2);
+					
 				}
 				// apply mutation
 				else {
@@ -120,7 +122,7 @@ public class EsgsgpRun extends GsgpRun {
 						newIndividual = applyStandardMutation(mp1);
 					}
 				}
-
+				newIndividual.setMp1(mp1);
 				/*
 				 * add the new individual to the offspring population if its
 				 * depth is not higher than the maximum (applicable only if the
@@ -140,11 +142,12 @@ public class EsgsgpRun extends GsgpRun {
 						newIndividual.getProgram(i).evaluate(data);
 						
 					}
-					//System.out.println("Offspring first program training error " +newIndividual.getProgram(0).getTrainingError());
+					
+					
 					newIndividual.evaluate(data);
 				}
+				//System.out.println("Adding to offspring " +newIndividual.getId()+ " train theta " +  newIndividual.getTrainingTheta());
 				offspring.addIndividual(newIndividual);
-				//System.out.println("offspring training " +newIndividual.getTrainingError()+"\n");
 			}
 
 			mpopulation = selectSurvivors(offspring);
@@ -160,9 +163,9 @@ public class EsgsgpRun extends GsgpRun {
 		if (printAtEachGeneration) {
 			System.out.println("\nGeneration:\t\t" + currentGeneration);
 			System.out.printf("Training Theta:\t\t%.2f\nUnseen Theta:\t\t%.2f\nReconstructed Training Error:"
-					+ "\t\t%.2f\nReconstructed Unseen Error:\t\t%.2f\n",
+					+ "\t\t%.2f\nReconstructed Unseen Error:\t\t%.2f\nTraining Error Program 1:\t\t%.2f\nTraining Error Program 2:\t\t%.2f\n",
 					currentMBest.getTrainingTheta(), currentMBest.getUnseenTheta(), currentMBest.getReconTrainingError(),
-					currentMBest.getReconUnseenError());
+					currentMBest.getReconUnseenError(),currentMBest.getProgram(0).getTrainingError(),currentMBest.getProgram(1).getTrainingError());
 			
 		}
 	}
@@ -180,6 +183,7 @@ public class EsgsgpRun extends GsgpRun {
 			tournamentPopulation.addIndividual(mpopulation.getMIndividual(index));
 
 		}
+		//System.out.println("Tournament get best");
 		return tournamentPopulation.getBestM();
 	}	
 	
@@ -243,13 +247,14 @@ public class EsgsgpRun extends GsgpRun {
 	// keep the best overall + all the remaining offsprings
 	protected MPopulation selectSurvivors(MPopulation newIndividuals) {
 		MPopulation survivors = new MPopulation();
-		MIndividual bestParent = mpopulation.getBestM();
-		MIndividual bestNewIndividual = newIndividuals.getBestM();
-		MIndividual bestOverall;	
 		
+		MIndividual bestParent = mpopulation.getBestM();
+		
+		MIndividual bestNewIndividual = newIndividuals.getBestM();
+		MIndividual bestOverall;			
 
 		// the best overall is in the current population
-		if (bestParent.getTrainingError() < bestNewIndividual.getTrainingError()) {
+		if (bestParent.getTrainingTheta() < bestNewIndividual.getTrainingTheta()) {
 			
 			bestOverall = bestParent;
 		}
@@ -260,7 +265,13 @@ public class EsgsgpRun extends GsgpRun {
 		}
 
 		survivors.addIndividual(bestOverall);
-
+		try {
+			bestOverall.output2(currentGeneration, file2);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		for (int i = 0; i < newIndividuals.getSize(); i++) {
 			if (newIndividuals.getMIndividual(i).getId() != bestOverall.getId()) {
 				survivors.addIndividual(newIndividuals.getMIndividual(i));
@@ -271,14 +282,16 @@ public class EsgsgpRun extends GsgpRun {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+
 			}
 		}
-		//System.out.print("Survivors best: " + survivors.getBestM().getTrainingError());
+
 		return survivors;
 	}
 	
 
 	protected void updateCurrentMBest() {
+		
 		currentMBest = mpopulation.getBestM();
 	}
 
@@ -298,13 +311,20 @@ public class EsgsgpRun extends GsgpRun {
 	   // creates a FileWriter Object
 	      FileWriter writer2 = new FileWriter(file2); 
 	      // Writes the content to the file
-	      writer2.write("CurrentRun,Generation,ID,trainingTheta,UnseenTheta,reconTrainingError,reconUnseenError,LowestDistance"); 
+	      writer2.write("CurrentRun,Generation,ID,p1,p2,P1Training,P1Unseen,P2Training,P2Unseen,trainingTheta,UnseenTheta,reconTrainingError,reconUnseenError,LowestDistance"); 
 	      writer2.flush();
 	      writer2.close();
 	   // creates a FileWriter Object
 	      FileWriter writer3 = new FileWriter(OutputsFile); 
 	      // Writes the content to the file
-	      writer3.write("CurrentRun;ID;ExpressionNum;TrainingErrorVector;TrainingOutputVector"); 
+	      writer3.write("CurrentRun,ID,ExpressionNum,TrainingErrorVector0,"); 
+	      for(int i=1;i<data.getTrainingData().length;i++){
+	    	  writer3.write("TrainingErrorVector"+i+",");
+	      }
+	      writer3.write("TrainingOutputVector,");
+	      for(int i=1;i<data.getTrainingData().length;i++){
+	    	  writer3.write("TrainingOutputVector"+i+",");
+	      }
 	      writer3.flush();
 	      writer3.close();
 	   }	
