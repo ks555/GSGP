@@ -21,6 +21,7 @@ public class MIndividual extends Individual {
 	protected long id;
 	protected ArrayList<Individual> programs;
 	protected int depth;
+	protected double [] ratios;
 	protected double[][] trainingErrorVectors =  new double[numPrograms][];
 	protected double [][] unseenErrorVectors =  new double[numPrograms][];
 	protected double trainingTheta,unseenTheta;
@@ -71,7 +72,7 @@ public class MIndividual extends Individual {
 			File outputs = new File("results/mindividuals/outputs.txt");
 			
 	        // Writes the content to the file
-			//!!WHY IS THIS NOT WRITING THE FIRST GENERATION?? EVEN THOUGH THE TRY CLAUSE IS ENTERED???
+			//!!WHY IS THIS NOT WRITING THE FIRST GENERATION?? EVEN THOUGH THE TRY CLAUSE IS BEING COMPLETED???
 			///!!!PUT THIS PRINTING IN A METHOD!
 	        try {
 	    	  FileWriter writer = new FileWriter(outputs,true); 
@@ -100,7 +101,7 @@ public class MIndividual extends Individual {
 			
 			
 			//for each program, print to outputs run, gen, i, EVT, EVU, OVT, OVU
-			File outputs = new File("results/mindividuals/outputs.txt");
+			//File outputs = new File("results/mindividuals/outputs.txt");
 	      
 //	        // Writes the content to the file
 //	        try {
@@ -217,25 +218,9 @@ public class MIndividual extends Individual {
 		      }
 		   
 	}
-     
-    public double calcDistances(Individual newInd, int j){
 
-	        double [] joutputs = newInd.getTrainingDataOutputs();
-	        double [] koutputs = this.getProgram(0).getTrainingDataOutputs();
-	        double distance = calculateEuclideanDistance(koutputs, joutputs);
-	        
-	    	for (int k=1;k<j;k++){	
-	    		
-	    		koutputs = this.getProgram(k).getTrainingDataOutputs();    		
-	    		double temp = calculateEuclideanDistance(koutputs, joutputs);
-	    		if (temp<distance){
-	    			distance=temp;
-	    			}	    		
-	    	}  
-	    minDistance = 1-1/(1+distance);    	
-    	return distance;
-    }
     
+    //checks the distances of all the expressions in a MIndividual from each other, returns the min distance found.
     public double calcDistances(){
 
         double [] ioutputs = this.getProgram(0).getTrainingDataOutputs();
@@ -256,7 +241,67 @@ public class MIndividual extends Individual {
         
 		return distance;
 	}
+    //overloaded method
+    //checks distances of a new expression from the expressions already within the MIndividual. Returns the minimum distance
+   public double calcDistances(Individual newInd, int j){
 
+	        double [] joutputs = newInd.getTrainingDataOutputs();
+	        double [] koutputs = this.getProgram(0).getTrainingDataOutputs();
+	        double distance = calculateEuclideanDistance(koutputs, joutputs);
+	        
+	    	for (int k=1;k<j;k++){	
+	    		
+	    		koutputs = this.getProgram(k).getTrainingDataOutputs();    		
+	    		double temp = calculateEuclideanDistance(koutputs, joutputs);
+	    		if (temp<distance){
+	    			distance=temp;
+	    			}	    		
+	    	}  
+	    minDistance = 1-1/(1+distance);    	
+   	return distance;
+   }
+   
+   //calcs ratios between outputs of the two expressions.
+   public void calcRatios(double[]oneSemantics,double[]twoSemantics){
+
+
+		double[] ratiosTemp=new double[oneSemantics.length];
+			
+		for (int i=0;i<oneSemantics.length;i++){
+			ratiosTemp[i]=oneSemantics[i]/twoSemantics[i];
+		}
+		Arrays.sort(ratiosTemp);
+		ratios=ratiosTemp;
+	}
+   
+   //checks ratios between outputs of the two expressions.
+   public boolean checkRatios(){
+		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
+		double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();
+		calcRatios(programOneSemantics, programTwoSemantics);
+	    boolean check=false;
+		for (int i=0;i<ratios.length;i++){
+			if (ratios[i]<2){
+				check=true;
+			}
+		}
+		return check;
+	} 
+   //checks ratios between outputs of the two expressions.
+   public boolean checkRatios(Individual ind, int j){
+		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
+		//WHEN MORE THAN TWO EXPRESSIONS, THIS WILL BE DIFFERENT - GET OUTPUTS OF EACH EXPRESSION (UP TO INDEX J-1), PLUS OUT PUT OF IND
+		double[] programTwoSemantics = ind.getTrainingDataOutputs();
+		calcRatios(programOneSemantics, programTwoSemantics);
+	    boolean check=false;
+		for (int i=0;i<ratios.length;i++){
+			System.out.println(ratios[i]);
+			if (Math.abs(ratios[i])<2){
+				check=true;
+			}
+		}
+		return check;
+	} 
 	protected double calculateEuclideanDistance(double[] koutputs, double[] joutputs) {
 		double sum = 0.0;
 		for (int i = 0; i < koutputs.length; i++) {
@@ -273,7 +318,8 @@ public class MIndividual extends Individual {
 		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
 		double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();
 		double[] reconstructedTrainingSemantics = new double[programOneSemantics.length];
-		double k = getK(programOneSemantics,programTwoSemantics);
+		
+		double k = calculateK();
 		for (int i = 0; i < programOneSemantics.length; i++) {
 			reconstructedTrainingSemantics[i] =  1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
 		}		
@@ -286,20 +332,16 @@ public class MIndividual extends Individual {
 		double[] reconstructedUnseenSemantics = new double[unseenErrorVectors[0].length];	
 		double[] programOneSemantics = getProgram(0).getUnseenDataOutputs();;
 		double[] programTwoSemantics = getProgram(1).getUnseenDataOutputs();
-		double k = this.getK(programOneSemantics,programTwoSemantics);
+		
+		double k = calculateK();
 		for (int i = 0; i < programOneSemantics.length; i++) {
 			reconstructedUnseenSemantics[i] = 1/(1-k)*programOneSemantics[i]-1/(1-k)*programTwoSemantics[i];
 		}			
 		return reconstructedUnseenSemantics;
 	}	
 	
-	public double getK(double[]oneSemantics,double[]twoSemantics){
-		double[] ratios=new double[oneSemantics.length];
-		double k;		
-		for (int i=0;i<oneSemantics.length;i++){
-			ratios[i]=oneSemantics[i]/twoSemantics[i];
-		}
-		Arrays.sort(ratios);
+	public double calculateK(){
+		double k;
 		//get median
 		if (ratios.length % 2 == 0)
 		    k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;

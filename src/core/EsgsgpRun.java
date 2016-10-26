@@ -57,18 +57,24 @@ public class EsgsgpRun extends GsgpRun {
 					
 					//for j > 0, check distance of expression from all expressions previously added to mindividual.
 					//parameters are 'candidate' individual and j, the index it is to be added to mindividual at
-					double distance = mindividual.calcDistances(populations.get(j).getIndividual(i), j);
+					//double distance = mindividual.calcDistances(populations.get(j).getIndividual(i), j);
 					Individual ind = populations.get(j).getIndividual(i);
-					while(distance<minDistance){	
+					boolean check = mindividual.checkRatios(ind,  j);
+					while(check){	
 						//if distance is too small, replace ind with a new program
 						ind = grow(this.getMaximumDepth());
 						ind.evaluate(data);
-						distance=mindividual.calcDistances(ind, j);									
+						//distance=mindividual.calcDistances(ind, j);	
+						check = mindividual.checkRatios(ind,  j);
+						System.out.println(check);
 					}
 					mindividual.addProgramAtIndex(ind,j);
 				}
 			}
-				
+			
+			//add ratio check here, set min distance to 0, can adjust the above distance check stuff if 
+			//we switch to the ratio check
+			
 			mindividual.evaluate(data);
 			mpopulation.addIndividual(mindividual);			
 			
@@ -107,10 +113,12 @@ public class EsgsgpRun extends GsgpRun {
 				if (randomGenerator.nextDouble() < crossoverProbability) {
 					MIndividual mp2 = selectMParent();
 					newIndividual = applyStandardCrossover(mp1, mp2);
+					boolean check = newIndividual.checkRatios();
 					//check distances between programs in newIndividual, keep reselecting mp2 and redoing crossover until distances are high enough
-					while(newIndividual.calcDistances()<minDistance){
+					while(check){
 						mp2 = selectMParent();
 						newIndividual = applyStandardCrossover(mp1, mp2);
+						check = newIndividual.checkRatios();
 					}				
 					newIndividual.setMp2(mp2);
 					
@@ -118,8 +126,10 @@ public class EsgsgpRun extends GsgpRun {
 				// apply mutation
 				else {
 					newIndividual = applyStandardMutation(mp1);
-					while(newIndividual.calcDistances()<minDistance){
+					boolean check = newIndividual.checkRatios();
+					while(check){
 						newIndividual = applyStandardMutation(mp1);
+						check = newIndividual.checkRatios();
 					}
 				}
 				newIndividual.setMp1(mp1);
