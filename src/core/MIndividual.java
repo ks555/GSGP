@@ -66,26 +66,6 @@ public class MIndividual extends Individual {
 		for(int i=0;i<numPrograms;i++){
 			
 			trainingErrorVectors[i]=this.getProgram(i).evaluateErrorVectorOnTrainingData(data);
-			
-			//for each program, print to outputs run, gen, i, EVT, EVU, OVT, OVU
-			//!!!this is messy (file name in two places, doesnt print great) just for testing right now
-			File outputs = new File("results/mindividuals/outputs.txt");
-			
-	        // Writes the content to the file
-			//!!WHY IS THIS NOT WRITING THE FIRST GENERATION?? EVEN THOUGH THE TRY CLAUSE IS BEING COMPLETED???
-			///!!!PUT THIS PRINTING IN A METHOD!
-	        try {
-	    	  FileWriter writer = new FileWriter(outputs,true); 
-			  writer.write("\n"+Main.CURRENTRUN+","+getId()+
-					  ","+i+","+ Arrays.toString(trainingErrorVectors[i]).replace("[","").replace("]", "")+","+Arrays.toString(getProgram(i).getTrainingDataOutputs()).replace("[","").replace("]", ""));
-		      writer.flush();
-		      writer.close();	
-		     
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
 		
 		}
 		
@@ -98,21 +78,6 @@ public class MIndividual extends Individual {
 		for(int i=0;i<numPrograms;i++){
 			//calc theta
 			unseenErrorVectors[i]=this.getProgram(i).evaluateErrorVectorOnUnseenData(data);
-			
-			
-			//for each program, print to outputs run, gen, i, EVT, EVU, OVT, OVU
-			//File outputs = new File("results/mindividuals/outputs.txt");
-	      
-//	        // Writes the content to the file
-//	        try {
-//	    	  FileWriter writer = new FileWriter(outputs,true); 
-//			  writer.write(","+Arrays.toString(unseenErrorVectors[i])+","+Arrays.toString(this.getProgram(i).getUnseenDataOutputs()));
-//		      writer.flush();
-//		      writer.close();
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
 
 		}
 		
@@ -189,7 +154,7 @@ public class MIndividual extends Individual {
 		   //"CurrentRun,Generation,ID,trainingTheta,UnseenTheta,reconTrainingError,reconUnseenError,LowestDistance"
 		      FileWriter writer = new FileWriter(file2,true); 
 		      
-		      if (currentGeneration==0){
+		      if (currentGeneration==0||mp1==null&&mp2==null){
 			      // Writes the content to the file
 			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+","+
 			    		  ","+getProgram(0).getTrainingError()+","+getProgram(0).getUnseenError()+","+getProgram(1).getTrainingError()+","+ getProgram(1).getUnseenError()+
@@ -199,9 +164,9 @@ public class MIndividual extends Individual {
 			      writer.close();	  
 		      }
 		      else if(mp2==null){
-		    	  System.out.println(mp1.getId());
+		    	 System.out.println(mp1.getId());
 			      // Writes the content to the file
-			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+mp1.getId()+","+
+			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+getId()+","+
 			    		  ","+getProgram(0).getTrainingError()+","+getProgram(0).getUnseenError()+","+getProgram(1).getTrainingError()+","+ getProgram(1).getUnseenError()+
 			    		  ","+ getTrainingTheta()+","+getUnseenTheta()+","+getReconTrainingError()+
 			    		  ","+getReconUnseenError()+","+minDistance);
@@ -218,6 +183,23 @@ public class MIndividual extends Individual {
 			      writer.close();	
 		      }
 		   
+	}
+	// Writes the training errors and training output of each individual to  file
+	public void printVectors(int currentGeneration,File file) throws IOException{
+		//System.out.println(outputsFile.getName());
+		
+		//!!WHY IS THIS NOT overwriting THE FIRST GENERATION??
+		///!!!PUT THIS PRINTING IN A METHOD!
+		for(int i=0;i<numPrograms;i++){
+			FileWriter writerOut = new FileWriter(file,true);
+			writerOut.write("\n"+Main.CURRENTRUN+currentGeneration+","+getId()+
+				","+i+","+ Arrays.toString(trainingErrorVectors[i]).replace("[","").replace("]", "")+","+Arrays.toString(getProgram(i).getTrainingDataOutputs()).replace("[","").replace("]", ""));
+	      writerOut.flush();
+	      writerOut.close();
+		}
+	     
+
+		
 	}
 
     
@@ -265,7 +247,6 @@ public class MIndividual extends Individual {
    //calcs ratios between outputs of the two expressions.
    public void calcRatios(double[]oneSemantics,double[]twoSemantics){
 
-
 		double[] ratiosTemp=new double[oneSemantics.length];
 			
 		for (int i=0;i<oneSemantics.length;i++){
@@ -282,7 +263,7 @@ public class MIndividual extends Individual {
 		calcRatios(programOneSemantics, programTwoSemantics);
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
-			System.out.println(ratios[i]);
+			
 			if (Math.abs(ratios[i])>2){
 				
 			}
@@ -290,7 +271,7 @@ public class MIndividual extends Individual {
 				check=true;
 			}
 		}
-		System.out.println(check);
+		
 		return check;
 	} 
    //checks ratios between outputs of the two expressions.
@@ -302,7 +283,7 @@ public class MIndividual extends Individual {
 		calcRatios(programOneSemantics, programTwoSemantics);
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
-			System.out.println(ratios[i]);
+			
 			if (Math.abs(ratios[i])>2){
 				
 			}
@@ -310,7 +291,7 @@ public class MIndividual extends Individual {
 				check=true;
 			}
 		}
-		System.out.println(check);
+		
 		return check;
 	} 
 	protected double calculateEuclideanDistance(double[] koutputs, double[] joutputs) {
