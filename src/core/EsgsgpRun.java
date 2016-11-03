@@ -22,19 +22,36 @@ public class EsgsgpRun extends GsgpRun {
 	protected MIndividual currentMBest;
 	protected double minDistance;
 	
-	File file = new File("results/results.txt");
-	File file2 = new File("results/population.txt");
-	File OutputsFile = new File("results/mindividuals/outputs.txt");
+	protected File file;
+	protected File file2;
+	protected File OutputsFile;
 
 	public EsgsgpRun(Data data) {
 		super(data);		
+		if(Main.CURRENTRUN==1){
+			
+			printFirstGen();
+		}
+		
 	}
 
 	protected void initialize() {
+
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
 		minDistance=0.0;
+		file = new File("results/results.txt");
+		file2 = new File("results/population.txt");
+		OutputsFile = new File("results/outputs.txt");
+		
+		try {
+			 
+			createOutputFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		for (int i = 0; i <  numPrograms; i++) {
 			
@@ -68,19 +85,24 @@ public class EsgsgpRun extends GsgpRun {
 						check = mindividual.checkRatios(ind,  j);
 						
 					}
+					
 					mindividual.addProgramAtIndex(ind,j);
+					
 				}
+			}						
+			mindividual.evaluate(data);				
+			try{				
+				mindividual.printVectors(currentGeneration,OutputsFile);
+			}catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 			}
-						
-			mindividual.evaluate(data);			
-			System.out.println("Adding "+mindividual.getId()+ " Ratio < 2: " + mindividual.checkRatios());
 			mpopulation.addIndividual(mindividual);			
 			
 		}	
 		
-		updateCurrentMBest();
-		//!!!printing Generation 0 but will be listed as Generation 1 as generation has already been incremented
-		printMPopState();
+		updateCurrentMBest();	
+		printMPopState(0);
 	}
 
 	public void printFirstGen(){
@@ -118,19 +140,24 @@ public class EsgsgpRun extends GsgpRun {
 						newIndividual = applyStandardCrossover(mp1, mp2);
 						check = newIndividual.checkRatios();
 					}				
+					newIndividual.setMp1(mp1);
+					
 					newIndividual.setMp2(mp2);
 					
 				}
 				// apply mutation
 				else {
+					
 					newIndividual = applyStandardMutation(mp1);
+					newIndividual.setMp1(mp1);
+					
 					boolean check = newIndividual.checkRatios();
 					while(check){
 						newIndividual = applyStandardMutation(mp1);
 						check = newIndividual.checkRatios();
 					}
 				}
-				newIndividual.setMp1(mp1);
+				
 				/*
 				 * add the new individual to the offspring population if its
 				 * depth is not higher than the maximum (applicable only if the
@@ -144,6 +171,7 @@ public class EsgsgpRun extends GsgpRun {
 				}
 				if (applyDepthLimit && flag) {
 					newIndividual = mp1;
+					
 				} else {
 					for (int i=0; i<numPrograms; i++){
 						//evaluate each program in the individual
@@ -153,8 +181,8 @@ public class EsgsgpRun extends GsgpRun {
 					
 					
 					newIndividual.evaluate(data);
+					newIndividual.printVectors(currentGeneration,OutputsFile);
 				}
-				System.out.println("Adding "+newIndividual.getId()+ " Ratio < 2: " + newIndividual.checkRatios());
 				offspring.addIndividual(newIndividual);
 			}
 
@@ -170,6 +198,19 @@ public class EsgsgpRun extends GsgpRun {
 	protected void printMPopState() {
 		if (printAtEachGeneration) {
 			System.out.println("\nGeneration:\t\t" + currentGeneration);
+			System.out.printf("Training Theta (deg):\t\t%.2f\nUnseen Theta (deg):\t\t%.2f\nReconstructed Training Error:"
+					+ "\t\t%.2f\nReconstructed Unseen Error:\t\t%.2f\nTraining Error Program 1:\t\t%.2f\nTraining Error Program 2:\t\t%.2f\n"
+					+ "Id:\t\t%d\nK:\t\t%.2f\n",
+					currentMBest.getTrainingTheta(), currentMBest.getUnseenTheta(), currentMBest.getReconTrainingError(),
+					currentMBest.getReconUnseenError(),currentMBest.getProgram(0).getTrainingError(),currentMBest.getProgram(1).getTrainingError(),
+					currentMBest.getId(),currentMBest.getK());
+			
+		}
+	}
+	//overloaded for printing Generation 0 - currentGeneration is already incremented when print is called the first time
+	protected void printMPopState(int generation) {
+		if (printAtEachGeneration) {
+			System.out.println("\nGeneration:\t\t0");
 			System.out.printf("Training Theta:\t\t%.2f\nUnseen Theta:\t\t%.2f\nReconstructed Training Error:"
 					+ "\t\t%.2f\nReconstructed Unseen Error:\t\t%.2f\nTraining Error Program 1:\t\t%.2f\nTraining Error Program 2:\t\t%.2f\n",
 					currentMBest.getTrainingTheta(), currentMBest.getUnseenTheta(), currentMBest.getReconTrainingError(),
@@ -177,7 +218,6 @@ public class EsgsgpRun extends GsgpRun {
 			
 		}
 	}
-	
 	// tournament selection
 	
 	protected MIndividual selectMParent() {
@@ -218,8 +258,8 @@ public class EsgsgpRun extends GsgpRun {
 			else {
 				pOffspring = buildCrossoverSemantics(p1, p2);
 				offspring.addProgramAtIndex(pOffspring,i);
-				}			
-			
+			}			
+			pOffspring.evaluate(data);
 		}	
 		//print
 //		System.out.println("offspring ID: " +offspring.getId());
@@ -235,16 +275,19 @@ public class EsgsgpRun extends GsgpRun {
 		
 		MIndividual offspring = new MIndividual();
 		
+		
 		for(int i=0; i<mp.getNumPrograms(); i++){
+			Individual pOffspring = new Individual();
 			if (buildIndividuals) {
-
-				offspring.addProgramAtIndex(buildMutationIndividual(mp.getProgram(i)),i);
+				pOffspring=buildMutationIndividual(mp.getProgram(i));
+				offspring.addProgramAtIndex(pOffspring,i);
 				
 			} else {				
-	
-				offspring.addProgramAtIndex(buildMutationSemantics(mp.getProgram(i)),i);
+				pOffspring=buildMutationSemantics(mp.getProgram(i));
+				offspring.addProgramAtIndex(pOffspring,i);
 				
 			}
+			pOffspring.evaluate(data);
 		}
 		
 		return offspring;
@@ -273,7 +316,6 @@ public class EsgsgpRun extends GsgpRun {
 		}
 
 		survivors.addIndividual(bestOverall);
-		System.out.println("Adding "+bestOverall.getId()+ " Ratio < 2: " + bestOverall.checkRatios());
 		try {
 			bestOverall.output2(currentGeneration, file2);
 		} catch (IOException e) {
@@ -284,7 +326,6 @@ public class EsgsgpRun extends GsgpRun {
 		for (int i = 0; i < newIndividuals.getSize(); i++) {
 			if (newIndividuals.getMIndividual(i).getId() != bestOverall.getId()) {
 				survivors.addIndividual(newIndividuals.getMIndividual(i));
-				System.out.println("Adding "+newIndividuals.getMIndividual(i).getId()+ " Ratio < 2: " + newIndividuals.getMIndividual(i).checkRatios());
 				//print to new individual to output2, population
 				try {
 					newIndividuals.getMIndividual(i).output2(currentGeneration, file2);
