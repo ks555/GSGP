@@ -40,10 +40,11 @@ public class EsgsgpRun extends GsgpRun {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
-		minDistance=0.0;
+		minDistance=50;
 		file = new File("results/results.txt");
 		file2 = new File("results/population.txt");
 		OutputsFile = new File("results/outputs.txt");
+		boolean flag=false;
 		
 		try {
 			 
@@ -66,31 +67,36 @@ public class EsgsgpRun extends GsgpRun {
 			MIndividual mindividual = new MIndividual();
 			
 			for (int j = 0; j < numPrograms; j++) {
+				Individual ind = populations.get(j).getIndividual(i);
+				//check if any errors of the program is > maxError . if not, add to Mindividual
+				flag=ind.checkMaxError();
+				
 				
 				if (j==0){
-					mindividual.addProgramAtIndex(populations.get(j).getIndividual(i),j);
-				}
-				else{
-					
-					//for j > 0, check distance of expression from all expressions previously added to mindividual.
-					//parameters are 'candidate' individual and j, the index it is to be added to mindividual at
-					//double distance = mindividual.calcDistances(populations.get(j).getIndividual(i), j);
-					Individual ind = populations.get(j).getIndividual(i);
-					boolean check = mindividual.checkRatios(ind,  j);
-					while(check){	
+					while(flag==true){
 						//if distance is too small, replace ind with a new program
 						ind = grow(this.getMaximumDepth());
 						ind.evaluate(data);
-						//distance=mindividual.calcDistances(ind, j);	
-						check = mindividual.checkRatios(ind,  j);
-						
+						flag = ind.checkMaxError();
 					}
-					
-					mindividual.addProgramAtIndex(ind,j);
+				}
+				else{
+					double distance = mindividual.calcDistances(ind, j);
+					while(flag==true||distance<minDistance){
+						//if distance is too small, replace ind with a new program
+						ind = grow(this.getMaximumDepth());
+						ind.evaluate(data);
+						distance=mindividual.calcDistances(ind, j);	
+						flag = ind.checkMaxError();
+					}
+				}
+
+				mindividual.addProgramAtIndex(ind,j);
 					
 				}
-			}						
-			mindividual.evaluate(data);				
+								
+			mindividual.evaluate(data);		
+			//print to txt file vectors of mindividual being added to population
 			try{				
 				mindividual.printVectors(currentGeneration,OutputsFile);
 			}catch (IOException e) {
@@ -133,15 +139,30 @@ public class EsgsgpRun extends GsgpRun {
 				if (randomGenerator.nextDouble() < crossoverProbability) {
 					MIndividual mp2 = selectMParent();
 					newIndividual = applyStandardCrossover(mp1, mp2);
-					boolean check = newIndividual.checkRatios();
-					//check distances between programs in newIndividual, keep reselecting mp2 and redoing crossover until distances are high enough
-					while(check){
+					boolean flag=false;
+					//check errors of each program
+					for(int i=0; i<newIndividual.numPrograms;i++){
+						if(newIndividual.getProgram(i).checkMaxError()){
+							flag=true;
+						}
+					}
+					//check distances of each program
+					double distance=newIndividual.calcDistances();
+					while(flag==true||distance<minDistance){						
+						mp1 = selectMParent();
 						mp2 = selectMParent();
 						newIndividual = applyStandardCrossover(mp1, mp2);
-						check = newIndividual.checkRatios();
-					}				
-					newIndividual.setMp1(mp1);
+						flag=false;
+						for(int i=0; i<newIndividual.numPrograms;i++){
+							if(newIndividual.getProgram(i).checkMaxError()){
+								flag=true;
+							}
+						}
+						distance=newIndividual.calcDistances();
+					}
 					
+			
+					newIndividual.setMp1(mp1);					
 					newIndividual.setMp2(mp2);
 					
 				}
@@ -150,12 +171,26 @@ public class EsgsgpRun extends GsgpRun {
 					
 					newIndividual = applyStandardMutation(mp1);
 					newIndividual.setMp1(mp1);
-					
-					boolean check = newIndividual.checkRatios();
-					while(check){
-						newIndividual = applyStandardMutation(mp1);
-						check = newIndividual.checkRatios();
+					boolean flag=false;
+					//check errors of each program
+					for(int i=0; i<newIndividual.numPrograms;i++){
+						if(newIndividual.getProgram(i).checkMaxError()){
+							flag=true;
+						}
 					}
+					double distance = newIndividual.calcDistances();
+					while(flag==true||distance<minDistance){
+						mp1 = selectMParent();	
+						flag=false;
+						newIndividual = applyStandardMutation(mp1);
+						for(int i=0; i<newIndividual.numPrograms;i++){
+							if(newIndividual.getProgram(i).checkMaxError()){
+								flag=true;
+							}
+						}
+						distance = newIndividual.calcDistances();
+					}
+
 				}
 				
 				/*
@@ -177,8 +212,7 @@ public class EsgsgpRun extends GsgpRun {
 						//evaluate each program in the individual
 						newIndividual.getProgram(i).evaluate(data);
 						
-					}
-					
+					}					
 					
 					newIndividual.evaluate(data);
 					newIndividual.printVectors(currentGeneration,OutputsFile);
