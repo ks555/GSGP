@@ -40,7 +40,7 @@ public class EsgsgpRun extends GsgpRun {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
-		minDistance=50;
+		minDistance=15;
 		file = new File("results/results.txt");
 		file2 = new File("results/population.txt");
 		OutputsFile = new File("results/outputs.txt");
@@ -125,6 +125,10 @@ public class EsgsgpRun extends GsgpRun {
 	}
 	
 	public void evolve(int numberOfGenerations) throws IOException {
+		//first tournament selection - selectLowestError for num inds in population
+		//set this to population
+		//
+		
 		
 		// evolve for a given number of generations
 		while (currentGeneration <= numberOfGenerations) {
@@ -133,10 +137,12 @@ public class EsgsgpRun extends GsgpRun {
 			// generate a new offspring population
 			while (offspring.getSize() < population.getSize()) {
 				MIndividual mp1, newIndividual;
+				//mp1 = nestedSelectMParent();
 				mp1 = selectMParent();
 				
 				// apply crossover to parents selected by tournament selection
 				if (randomGenerator.nextDouble() < crossoverProbability) {
+					//MIndividual mp2 = nestedSelectMParent();
 					MIndividual mp2 = selectMParent();
 					newIndividual = applyStandardCrossover(mp1, mp2);
 					boolean flag=false;
@@ -149,6 +155,8 @@ public class EsgsgpRun extends GsgpRun {
 					//check distances of each program
 					double distance=newIndividual.calcDistances();
 					while(flag==true||distance<minDistance){						
+						//mp1 = nestedSelectMParent();
+						//mp2 = nestedSelectMParent();
 						mp1 = selectMParent();
 						mp2 = selectMParent();
 						newIndividual = applyStandardCrossover(mp1, mp2);
@@ -180,7 +188,8 @@ public class EsgsgpRun extends GsgpRun {
 					}
 					double distance = newIndividual.calcDistances();
 					while(flag==true||distance<minDistance){
-						mp1 = selectMParent();	
+						//mp1 = nestedSelectMParent();	
+						mp1 = selectMParent();
 						flag=false;
 						newIndividual = applyStandardMutation(mp1);
 						for(int i=0; i<newIndividual.numPrograms;i++){
@@ -252,7 +261,95 @@ public class EsgsgpRun extends GsgpRun {
 			
 		}
 	}
-	// tournament selection
+	
+//	protected MIndividual nestedSelectMParent() {		
+//		
+//		MPopulation tournamentPopulationThree = new MPopulation();
+//		
+//		int tournamentSize = (int) (0.05 * population.getSize());
+//		
+//		//from tournamentPopulation, select lowest error
+//		//repeat N times where N = tournament size, this is tournamentPopulation2
+//		for (int k=0;k<tournamentSize;k++){
+//			MPopulation tournamentPopulationTwo = new MPopulation();
+//			for (int j=0;j<tournamentSize;j++){
+//				MPopulation tournamentPopulation = new MPopulation();
+//				for (int i = 0; i < tournamentSize; i++) {
+//					int index = randomGenerator.nextInt((mpopulation.getSize()));
+//					
+//					tournamentPopulation.addIndividual(mpopulation.getMIndividual(index));
+//
+//				}
+//				
+//				tournamentPopulationTwo.addIndividual(tournamentPopulation.getHighestDistance());
+//				
+//			}	
+//			tournamentPopulationThree.addIndividual(tournamentPopulationTwo.getLowestErrorM());
+//			
+//		}
+//		//from tournamentPopulation3 select lowest Theta - this is the selected parent
+//		return tournamentPopulationThree.getBestM();
+//	}
+//	
+//protected MIndividual nestedSelectMParent() {		
+//		
+//		MPopulation tournamentPopulationTwo = new MPopulation();
+//		
+//		int tournamentSize = (int) (0.05 * population.getSize());
+//		
+//		//from tournamentPopulation, select lowest error
+//		//repeat N times where N = tournament size, this is tournamentPopulation2
+//
+//			for (int j=0;j<tournamentSize;j++){
+//				MPopulation tournamentPopulation = new MPopulation();
+//				for (int i = 0; i < tournamentSize; i++) {
+//					int index = randomGenerator.nextInt((mpopulation.getSize()));
+//					
+//					tournamentPopulation.addIndividual(mpopulation.getMIndividual(index));
+//					//System.out.println("Add ind "+ mpopulation.getMIndividual(index).getId()+ " with distance "+mpopulation.getMIndividual(index).calcDistances());
+//
+//				}
+//				
+//				tournamentPopulationTwo.addIndividual(tournamentPopulation.getHighestDistance());
+//				//System.out.println("Distance tournament won by "+ tournamentPopulation.getHighestDistance().getId()+ " with distance "+tournamentPopulation.getHighestDistance().calcDistances());
+//				
+//			}	
+//
+//		//from tournamentPopulation3 select lowest Theta - this is the selected parent
+//		return tournamentPopulationTwo.getBestM();
+//	}
+	protected MIndividual nestedSelectMParent() {		
+	
+	MPopulation tournamentPopulationTwo = new MPopulation();
+	
+	int tournamentSize = (int) (0.05 * population.getSize());
+	
+	//from tournamentPopulation, select lowest error
+	//repeat N times where N = tournament size, this is tournamentPopulation2
+
+		for (int j=0;j<tournamentSize;j++){
+			MPopulation tournamentPopulation = new MPopulation();
+			for (int i = 0; i < tournamentSize; i++) {
+				int index = randomGenerator.nextInt((mpopulation.getSize()));
+				
+				tournamentPopulation.addIndividual(mpopulation.getMIndividual(index));
+				double sum = 0;
+				for(int k=0;k<mpopulation.getMIndividual(index).numPrograms;k++){
+					sum+=mpopulation.getMIndividual(index).getProgram(k).getTrainingError();
+				}
+				double avg =sum/mpopulation.getMIndividual(index).numPrograms;
+				//System.out.println("Add ind "+ mpopulation.getMIndividual(index).getId()+ " with error "+avg);
+
+			}
+
+			tournamentPopulationTwo.addIndividual(tournamentPopulation.getLowestErrorM());
+			//System.out.println("Error tournament won by "+ tournamentPopulation.getLowestErrorM().getId());
+			
+		}	
+	//from tournamentPopulation3 select lowest Theta - this is the selected parent
+	return tournamentPopulationTwo.getBestM();
+}
+	 //tournament selection
 	
 	protected MIndividual selectMParent() {
 		MPopulation tournamentPopulation = new MPopulation();
@@ -374,12 +471,10 @@ public class EsgsgpRun extends GsgpRun {
 		return survivors;
 	}
 	
-
 	protected void updateCurrentMBest() {
 		
 		currentMBest = mpopulation.getBestM();
 	}
-
 
    protected void createOutputFile()throws IOException{
 	      
@@ -429,9 +524,6 @@ public class EsgsgpRun extends GsgpRun {
 	   
    }
    
-
-	
-	
 	// ##### get's and set's from here on #####
 	public MIndividual getCurrentMBest() {
 		return currentMBest;
