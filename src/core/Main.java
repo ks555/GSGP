@@ -10,7 +10,7 @@ public class Main {
 
 	public static final String DATA_FILENAME = "ppb";
 	public static final int NUMBER_OF_RUNS = 1;
-	public static final int NUMBER_OF_GENERATIONS = 5;
+	public static final int NUMBER_OF_GENERATIONS = 100;
 	public static int CURRENTRUN;
 
 	public static void main(String[] args) throws IOException {

@@ -35,7 +35,22 @@ public class MPopulation extends Population {
 	public void addIndividual(MIndividual mindividual) {
 		mindividuals.add(mindividual);
 	}
+	
+//	public Individual getLowestErrorM() {
+//		return mindividuals.get(getLowestErrorBestIndex());
+//	}
 //
+//	public int getLowestErrorBestIndex() {
+//		int bestIndex = 0;
+//		double bestTrainingError = individuals.get(bestIndex).getTrainingError();
+//		for (int i = 1; i < individuals.size(); i++) {
+//			if (individuals.get(i).getTrainingError() < bestTrainingError) {
+//				bestTrainingError = individuals.get(i).getTrainingError();
+//				bestIndex = i;
+//			}
+//		}
+//		return bestIndex;
+//	}
 //	public void removeIndividual(int index) {
 //		individuals.remove(index);
 //	}
@@ -46,5 +61,10 @@ public class MPopulation extends Population {
 
 	public MIndividual getMIndividual(int index) {
 		return mindividuals.get(index);
+	}
+
+	public MIndividual getLowestErrorM() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

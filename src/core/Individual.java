@@ -32,13 +32,13 @@ public class Individual implements Serializable {
 
 	protected boolean sizeOverride;
 	protected int computedSize;
-	
+	protected double maxError;
 	
 	
 	public Individual() {
 		program = new ArrayList<ProgramElement>();
 		id = getNextId();
-		
+		maxError=100;
 	}
 
 	protected static long getNextId() {
@@ -48,6 +48,8 @@ public class Individual implements Serializable {
 	public void evaluate(Data data) {
 		evaluateOnTrainingData(data);
 		evaluateOnUnseenData(data);
+		evaluateErrorVectorOnTrainingData(data);
+		evaluateErrorVectorOnUnseenData(data);
 	}
 
 	public double[] evaluateOnTrainingData(Data data) {
@@ -140,7 +142,18 @@ public class Individual implements Serializable {
 		}
 		return errorVector;
 	}
-
+	//ADDED BY KRISTEN
+	
+	protected boolean checkMaxError() {
+		boolean flag = false;
+		
+		for (int i = 0; i < trainingErrorVector.length; i++) {
+			if(Math.abs(trainingErrorVector[i])>maxError){
+				flag=true;
+			};			
+		}
+		return flag;
+	}
 	
 	public Individual deepCopy() {
 		Individual newIndividual = new Individual();

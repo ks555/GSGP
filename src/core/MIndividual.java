@@ -188,8 +188,6 @@ public class MIndividual extends Individual {
 	public void printVectors(int currentGeneration,File file) throws IOException{
 		//System.out.println(outputsFile.getName());
 		
-		//!!WHY IS THIS NOT overwriting THE FIRST GENERATION??
-		///!!!PUT THIS PRINTING IN A METHOD!
 		for(int i=0;i<numPrograms;i++){
 			FileWriter writerOut = new FileWriter(file,true);
 			writerOut.write("\n"+Main.CURRENTRUN+currentGeneration+","+getId()+
@@ -220,7 +218,7 @@ public class MIndividual extends Individual {
   	    			}
         	  }
         	}        	
-        minDistance =  1-1/(1+distance);
+        minDistance =  distance;
         
 		return distance;
 	}
@@ -240,7 +238,7 @@ public class MIndividual extends Individual {
 	    			distance=temp;
 	    			}	    		
 	    	}  
-	    minDistance = 1-1/(1+distance);    	
+	    minDistance = distance;    	
    	return distance;
    }
    
@@ -258,8 +256,8 @@ public class MIndividual extends Individual {
    
    //checks ratios between outputs of the two expressions.
    public boolean checkRatios(){
-		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
-		double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();
+		double[] programOneSemantics = getProgram(0).getTrainingErrorVector();
+		double[] programTwoSemantics = getProgram(1).getTrainingErrorVector();
 		calcRatios(programOneSemantics, programTwoSemantics);
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
@@ -277,9 +275,9 @@ public class MIndividual extends Individual {
    //checks ratios between outputs of the two expressions.
    //overloaded method, checks ratio of new expression to current expressions in MIndividual
    public boolean checkRatios(Individual ind, int j){
-		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
+		double[] programOneSemantics = getProgram(0).getTrainingErrorVector();
 		//WHEN MORE THAN TWO EXPRESSIONS, THIS WILL BE DIFFERENT - GET OUTPUTS OF EACH EXPRESSION (UP TO INDEX J-1), PLUS OUT PUT OF IND
-		double[] programTwoSemantics = ind.getTrainingDataOutputs();
+		double[] programTwoSemantics = ind.getTrainingErrorVector();
 		calcRatios(programOneSemantics, programTwoSemantics);
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
@@ -327,13 +325,18 @@ public class MIndividual extends Individual {
 		
 		double k = calculateK();
 		for (int i = 0; i < programOneSemantics.length; i++) {
-			reconstructedUnseenSemantics[i] = 1/(1-k)*programOneSemantics[i]-1/(1-k)*programTwoSemantics[i];
+			reconstructedUnseenSemantics[i] = 1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
 		}			
 		return reconstructedUnseenSemantics;
 	}	
 	
 	public double calculateK(){
 		double k;
+		//!!! for two expressions only
+		double[] programOneSemantics = getProgram(0).getTrainingErrorVector();
+		double[] programTwoSemantics = getProgram(1).getTrainingErrorVector();
+		calcRatios(programOneSemantics, programTwoSemantics);
+		
 		//get median
 		if (ratios.length % 2 == 0)
 		    k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
@@ -369,9 +372,10 @@ public class MIndividual extends Individual {
   //  public String createStringFromArray()
 //	// ##### get's and set's from here on #####
 	
-
-
-
+	public double getK(){
+		
+		return calculateK();
+	}
 	
 	public double getTrainingTheta() {
 		
@@ -383,7 +387,7 @@ public class MIndividual extends Individual {
 		return unseenTheta;
 	}
 
-		public long getId() {
+	public long getId() {
 			return id;
 		}
 	

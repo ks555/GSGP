@@ -69,6 +69,7 @@ public class EsgsgpRun extends GsgpRun {
 			for (int j = 0; j < numPrograms; j++) {
 				Individual ind = populations.get(j).getIndividual(i);
 				//check if any errors of the program is > maxError . if not, add to Mindividual
+				ind.evaluate(data);
 				flag=ind.checkMaxError();
 				
 				
@@ -318,37 +319,37 @@ public class EsgsgpRun extends GsgpRun {
 //		//from tournamentPopulation3 select lowest Theta - this is the selected parent
 //		return tournamentPopulationTwo.getBestM();
 //	}
-	protected MIndividual nestedSelectMParent() {		
-	
-	MPopulation tournamentPopulationTwo = new MPopulation();
-	
-	int tournamentSize = (int) (0.05 * population.getSize());
-	
-	//from tournamentPopulation, select lowest error
-	//repeat N times where N = tournament size, this is tournamentPopulation2
-
-		for (int j=0;j<tournamentSize;j++){
-			MPopulation tournamentPopulation = new MPopulation();
-			for (int i = 0; i < tournamentSize; i++) {
-				int index = randomGenerator.nextInt((mpopulation.getSize()));
-				
-				tournamentPopulation.addIndividual(mpopulation.getMIndividual(index));
-				double sum = 0;
-				for(int k=0;k<mpopulation.getMIndividual(index).numPrograms;k++){
-					sum+=mpopulation.getMIndividual(index).getProgram(k).getTrainingError();
-				}
-				double avg =sum/mpopulation.getMIndividual(index).numPrograms;
-				//System.out.println("Add ind "+ mpopulation.getMIndividual(index).getId()+ " with error "+avg);
-
-			}
-
-			tournamentPopulationTwo.addIndividual(tournamentPopulation.getLowestErrorM());
-			//System.out.println("Error tournament won by "+ tournamentPopulation.getLowestErrorM().getId());
-			
-		}	
-	//from tournamentPopulation3 select lowest Theta - this is the selected parent
-	return tournamentPopulationTwo.getBestM();
-}
+//	protected MIndividual nestedSelectMParent() {		
+//	
+//	MPopulation tournamentPopulationTwo = new MPopulation();
+//	
+//	int tournamentSize = (int) (0.05 * population.getSize());
+//	
+//	//from tournamentPopulation, select lowest error
+//	//repeat N times where N = tournament size, this is tournamentPopulation2
+//
+//		for (int j=0;j<tournamentSize;j++){
+//			MPopulation tournamentPopulation = new MPopulation();
+//			for (int i = 0; i < tournamentSize; i++) {
+//				int index = randomGenerator.nextInt((mpopulation.getSize()));
+//				
+//				tournamentPopulation.addIndividual(mpopulation.getMIndividual(index));
+//				double sum = 0;
+//				for(int k=0;k<mpopulation.getMIndividual(index).numPrograms;k++){
+//					sum+=mpopulation.getMIndividual(index).getProgram(k).getTrainingError();
+//				}
+//				double avg =sum/mpopulation.getMIndividual(index).numPrograms;
+//				//System.out.println("Add ind "+ mpopulation.getMIndividual(index).getId()+ " with error "+avg);
+//
+//			}
+//
+//			tournamentPopulationTwo.addIndividual(tournamentPopulation.getLowestErrorM());
+//			//System.out.println("Error tournament won by "+ tournamentPopulation.getLowestErrorM().getId());
+//			
+//		}	
+//	//from tournamentPopulation3 select lowest Theta - this is the selected parent
+//	return tournamentPopulationTwo.getBestM();
+//}
 	 //tournament selection
 	
 	protected MIndividual selectMParent() {
