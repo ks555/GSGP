@@ -40,7 +40,7 @@ public class EsgsgpRun extends GsgpRun {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
-		minDistance=15;
+		minDistance=50;
 		file = new File("results/results.txt");
 		file2 = new File("results/population.txt");
 		OutputsFile = new File("results/outputs.txt");

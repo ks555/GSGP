@@ -8,29 +8,32 @@ import java.math.*;;
 
 public class Main {
 
-	public static final String DATA_FILENAME = "ppb";
-	public static final int NUMBER_OF_RUNS = 1;
+	public static final String DATA_FILENAME = "Dataset_PPB/";
+	//public static final String DATA_FILENAME = "ppb";
+	public static final int NUMBER_OF_RUNS = 30;
 	public static final int NUMBER_OF_GENERATIONS = 100;
 	public static int CURRENTRUN;
 
 	public static void main(String[] args) throws IOException {
 
 		// load training and unseen data
-		Data data = Utils.loadData(DATA_FILENAME);
+		
 
 		// run GP for a given number of runs
 		double[][] resultsPerRun = new double[4][NUMBER_OF_RUNS];
 		for (int i = 0; i < NUMBER_OF_RUNS; i++) {
 			CURRENTRUN=i+1;
+			Data data = Utils.loadData(DATA_FILENAME);
 
 			
 			System.out.printf("\n\t\t##### Run %d #####\n", i + 1);
 			//GpRun gp = new GpRun(data);
 			//GsgpRun gp = new GsgpRun(data);
 			EsgsgpRun gp = new EsgsgpRun(data);
+			
 			if(CURRENTRUN==1){
 				gp.createOutputFile();
-				gp.printFirstGen();
+				//gp.printFirstGen();
 			}
 			gp.evolve(NUMBER_OF_GENERATIONS);
 

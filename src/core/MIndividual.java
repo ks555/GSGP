@@ -164,7 +164,7 @@ public class MIndividual extends Individual {
 			      writer.close();	  
 		      }
 		      else if(mp2==null){
-		    	 System.out.println(mp1.getId());
+		    	 
 			      // Writes the content to the file
 			      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+getId()+","+getId()+","+
 			    		  ","+getProgram(0).getTrainingError()+","+getProgram(0).getUnseenError()+","+getProgram(1).getTrainingError()+","+ getProgram(1).getUnseenError()+
@@ -339,7 +339,8 @@ public class MIndividual extends Individual {
 		
 		//get median
 		if (ratios.length % 2 == 0)
-		    k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
+		   k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
+			//k = (double)ratios[ratios.length/2];
 		else
 		    k = (double) ratios[ratios.length/2];
 		return k;
