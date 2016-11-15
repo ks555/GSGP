@@ -3,6 +3,7 @@ package utils;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -16,8 +17,8 @@ public class Utils {
 //		double[][] unseenData = Utils.readData(dataFilename +"_unseen.txt");
 		double[][] trainingData = Utils.readData(dataFilename+"train"+Main.CURRENTRUN +".txt");
 		double[][] unseenData = Utils.readData(dataFilename +"test"+Main.CURRENTRUN +".txt");
-//		double[][] trainingData = Utils.readData(dataFilename+"train1_test"+".txt");
-//		double[][] unseenData = Utils.readData(dataFilename +"test1_test.txt");
+//		double[][] trainingData = Utils.readData(dataFilename+"train3"+".txt");
+//		double[][] unseenData = Utils.readData(dataFilename);
 		return new Data(trainingData, unseenData);
 	}
 
@@ -46,13 +47,20 @@ public class Utils {
 			for (int k = 0; k < numberOfColumns; k++) {				
 				data[i][k] = Double.parseDouble(tokens.nextToken().trim());
 				if (k==0){
-					System.out.println(data[i][k]);
+					//System.out.println(data[i][k]);
 				}
 			}
 		}
 		return data;
 	}
-
+	public static List<Integer> shuffleInstances(int end) {
+		List<Integer> list = new ArrayList<Integer>();
+		for (int i = 0; i < end; i++) {
+			list.add(i);
+		}
+		Collections.shuffle(list);
+		return list;
+	}
 	public static double getAverage(double[] values) {
 		double sum = 0.0;
 		for (int i = 0; i < values.length; i++) {

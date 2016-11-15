@@ -38,7 +38,7 @@ public class Individual implements Serializable {
 	public Individual() {
 		program = new ArrayList<ProgramElement>();
 		id = getNextId();
-		maxError=100;
+		maxError=10000;
 	}
 
 	protected static long getNextId() {

@@ -40,19 +40,12 @@ public class EsgsgpRun extends GsgpRun {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
-		minDistance=50;
+		minDistance=25;
 		file = new File("results/results.txt");
 		file2 = new File("results/population.txt");
 		OutputsFile = new File("results/outputs.txt");
 		boolean flag=false;
-		
-		try {
-			 
-			createOutputFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
 		
 		for (int i = 0; i <  numPrograms; i++) {
 			
@@ -110,6 +103,13 @@ public class EsgsgpRun extends GsgpRun {
 		
 		updateCurrentMBest();	
 		printMPopState(0);
+		
+		try {
+			output(0);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void printFirstGen(){
@@ -117,6 +117,7 @@ public class EsgsgpRun extends GsgpRun {
 			//print to each mindividual output2, (population.txt)
 			try {
 				mpopulation.getMIndividual(i).output2(0, file2);
+				output();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -486,7 +487,8 @@ public class EsgsgpRun extends GsgpRun {
 	   // creates a FileWriter Object
 	      FileWriter writer = new FileWriter(file); 
 	      // Writes the content to the file
-	      writer.write("CurrentRun,Generation,NumGens,NumRuns,popSize,trainingTheta,UnseenTheta,reconTrainError,reconTrainingError,reconUnseenError"); 
+	      writer.write("CurrentRun,Generation,NumGens,NumRuns,popSize,trainingTheta,UnseenTheta,"
+	      		+ "reconTrainError,reconUnseenError,depth,depthLimitOn,maxDepth,crossoverProb,k"); 
 	      writer.flush();
 	      writer.close();
 	   // creates a FileWriter Object
@@ -516,15 +518,28 @@ public class EsgsgpRun extends GsgpRun {
 	      FileWriter writer = new FileWriter(file,true); 
 	      // Writes the content to the file
 	      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+Main.NUMBER_OF_GENERATIONS+","+Main.NUMBER_OF_RUNS+
-	    		  ","+populationSize+currentMBest.getTrainingTheta()+","+currentMBest.getUnseenTheta()+","+currentMBest.getReconTrainingError()+
+	    		  ","+populationSize+","+currentMBest.getTrainingTheta()+","+currentMBest.getUnseenTheta()+","+currentMBest.getReconTrainingError()+
 	    		  ","+currentMBest.getReconUnseenError()+
-	    		  ","+currentBest.getDepth() + ","+","+applyDepthLimit+","+maximumDepth+
-	    		  ","+crossoverProbability); 
+	    		  ","+currentMBest.getDepth() + ","+","+applyDepthLimit+","+maximumDepth+
+	    		  ","+crossoverProbability+","+currentMBest.getK()); 
 	      writer.flush();
 	      writer.close();	      
 	   
    }
    
+   protected void output(int generation)throws IOException{
+
+	      FileWriter writer = new FileWriter(file,true); 
+	      // Writes the content to the file
+	      writer.write("\n"+Main.CURRENTRUN+","+generation+","+Main.NUMBER_OF_GENERATIONS+","+Main.NUMBER_OF_RUNS+
+	    		  ","+populationSize+","+currentMBest.getTrainingTheta()+","+currentMBest.getUnseenTheta()+","+currentMBest.getReconTrainingError()+
+	    		  ","+currentMBest.getReconUnseenError()+
+	    		  ","+currentMBest.getDepth() + ","+","+applyDepthLimit+","+maximumDepth+
+	    		  ","+crossoverProbability+","+currentMBest.getK()); 
+	      writer.flush();
+	      writer.close();	      
+	   
+}
 	// ##### get's and set's from here on #####
 	public MIndividual getCurrentMBest() {
 		return currentMBest;
