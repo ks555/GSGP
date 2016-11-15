@@ -76,7 +76,7 @@ public class GpRun implements Serializable {
 		populationSize = 20;
 		applyDepthLimit = true;
 		maximumDepth = 17;
-		crossoverProbability = 0.9;
+		crossoverProbability = 0.0;
 		printAtEachGeneration = true;
 
 		randomGenerator = new Random();

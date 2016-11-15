@@ -38,7 +38,7 @@ public class Individual implements Serializable {
 	public Individual() {
 		program = new ArrayList<ProgramElement>();
 		id = getNextId();
-		maxError=100;
+		maxError=10000;
 	}
 
 	protected static long getNextId() {
@@ -102,6 +102,7 @@ public class Individual implements Serializable {
 		double errorSum = 0.0;
 		for (int i = 0; i < data.length; i++) {
 			double target = data[i][data[0].length - 1];
+			//System.out.println(target);
 			errorSum += Math.pow(outputs[i] - target, 2.0);
 		}
 		return Math.sqrt(errorSum / data.length);
