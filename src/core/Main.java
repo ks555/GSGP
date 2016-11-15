@@ -111,13 +111,18 @@ public class Main {
 			System.out.println(e);
 		}
 
-		StringTokenizer tokens = new StringTokenizer(allLines.get(0).trim());
+		StringTokenizer tokens = new StringTokenizer(allLines.get(2).trim());
 		int numberOfColumns = tokens.countTokens();
-		data = new double[allLines.size()][numberOfColumns];
-		for (int i = 0; i < data.length; i++) {
+		data = new double[allLines.size()-2][numberOfColumns];
+		System.out.println("columns " + numberOfColumns );
+		System.out.println("rows " + data.length );
+		for (int i = 2; i < data.length; i++) {
 			tokens = new StringTokenizer(allLines.get(i).trim());
 			for (int k = 0; k < numberOfColumns; k++) {
 				data[i][k] = Double.parseDouble(tokens.nextToken().trim());
+				if (i==2){
+					//System.out.println(data[i][k]);
+				}
 			}
 		}
 		return data;

@@ -262,7 +262,7 @@ public class MIndividual extends Individual {
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
 			
-			if (Math.abs(ratios[i])>2){
+			if (Math.abs(ratios[i])>=1.2||Math.abs(ratios[i])<=0.98){
 				
 			}
 			else{
@@ -282,7 +282,7 @@ public class MIndividual extends Individual {
 	    boolean check=false;
 		for (int i=0;i<ratios.length;i++){
 			
-			if (Math.abs(ratios[i])>2){
+			if (Math.abs(ratios[i])>=1.2||Math.abs(ratios[i])<=0.98){
 				
 			}
 			else{
@@ -341,6 +341,21 @@ public class MIndividual extends Individual {
 		if (ratios.length % 2 == 0)
 		   k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
 			//k = (double)ratios[ratios.length/2];
+		else
+		    k = (double) ratios[ratios.length/2];
+		return k;
+	}
+	public double calculateK(Individual ind){
+		double k;
+		//!!! for two expressions only
+		double[] programOneSemantics = getProgram(0).getTrainingErrorVector();
+		double[] programTwoSemantics = ind.getTrainingErrorVector();
+		calcRatios(programOneSemantics, programTwoSemantics);
+		
+		//get median
+		if (ratios.length % 2 == 0)
+		   k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
+			
 		else
 		    k = (double) ratios[ratios.length/2];
 		return k;

@@ -21,6 +21,7 @@ public class EsgsgpRun extends GsgpRun {
 	protected int numPrograms;
 	protected MIndividual currentMBest;
 	protected double minDistance;
+	protected double minK;
 	
 	protected File file;
 	protected File file2;
@@ -40,7 +41,8 @@ public class EsgsgpRun extends GsgpRun {
 		populations = new ArrayList <Population>();
 		mpopulation = new MPopulation();
 		numPrograms = 2;
-		minDistance=25;
+		minDistance=50;
+		minK=1.2;
 		file = new File("results/results.txt");
 		file2 = new File("results/population.txt");
 		OutputsFile = new File("results/outputs.txt");
@@ -63,33 +65,29 @@ public class EsgsgpRun extends GsgpRun {
 				Individual ind = populations.get(j).getIndividual(i);
 				//check if any errors of the program is > maxError . if not, add to Mindividual
 				ind.evaluate(data);
-				flag=ind.checkMaxError();
-				
+				flag=ind.checkMaxError();				
 				
 				if (j==0){
-					while(flag==true){
-						//if distance is too small, replace ind with a new program
-						ind = grow(this.getMaximumDepth());
-						ind.evaluate(data);
-						flag = ind.checkMaxError();
-					}
+
 				}
 				else{
-					double distance = mindividual.calcDistances(ind, j);
-					while(flag==true||distance<minDistance){
-						//if distance is too small, replace ind with a new program
+					double k = mindividual.calculateK(ind);
+					while(Math.abs(k)<1.2&&Math.abs(k)>0.98){
+						//if k is too small, replace ind with a new program
 						ind = grow(this.getMaximumDepth());
 						ind.evaluate(data);
-						distance=mindividual.calcDistances(ind, j);	
-						flag = ind.checkMaxError();
+						k=mindividual.calculateK(ind);
+						System.out.println(mindividual.calculateK(ind));
 					}
-				}
-
-				mindividual.addProgramAtIndex(ind,j);
 					
+				}
+				
+				mindividual.addProgramAtIndex(ind,j);
+				
 				}
 								
 			mindividual.evaluate(data);		
+			
 			//print to txt file vectors of mindividual being added to population
 			try{				
 				mindividual.printVectors(currentGeneration,OutputsFile);
@@ -156,7 +154,8 @@ public class EsgsgpRun extends GsgpRun {
 					}
 					//check distances of each program
 					double distance=newIndividual.calcDistances();
-					while(flag==true||distance<minDistance){						
+					double k = newIndividual.calculateK();
+					while(Math.abs(k)<1.2&&Math.abs(k)>0.98){						
 						//mp1 = nestedSelectMParent();
 						//mp2 = nestedSelectMParent();
 						mp1 = selectMParent();
@@ -169,6 +168,7 @@ public class EsgsgpRun extends GsgpRun {
 							}
 						}
 						distance=newIndividual.calcDistances();
+						k = newIndividual.calculateK();
 					}
 					
 			
@@ -189,7 +189,8 @@ public class EsgsgpRun extends GsgpRun {
 						}
 					}
 					double distance = newIndividual.calcDistances();
-					while(flag==true||distance<minDistance){
+					double k = newIndividual.calculateK();
+					while(Math.abs(k)<1.2&&Math.abs(k)>0.98){
 						//mp1 = nestedSelectMParent();	
 						mp1 = selectMParent();
 						flag=false;
@@ -200,6 +201,7 @@ public class EsgsgpRun extends GsgpRun {
 							}
 						}
 						distance = newIndividual.calcDistances();
+						k = newIndividual.calculateK();
 					}
 
 				}
