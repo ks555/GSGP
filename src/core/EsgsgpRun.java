@@ -9,7 +9,7 @@ import core.MIndividual;
 import java.io.File;
 import java.io.FileWriter;
 
-public class EsgsgpRun extends GsgpRun {
+public class EsgsgpRun extends GpRun {
 
 	private static final long serialVersionUID = 7L;
 
@@ -386,14 +386,16 @@ public class EsgsgpRun extends GsgpRun {
 			Individual p2 = mp2.getProgram(rand);
 			Individual pOffspring;
 				
-			if (buildIndividuals) {
-				pOffspring = buildCrossoverIndividual(p1, p2);
-				offspring.addProgramAtIndex(pOffspring, i);
-			}
-			else {
-				pOffspring = buildCrossoverSemantics(p1, p2);
-				offspring.addProgramAtIndex(pOffspring,i);
-			}			
+//			if (buildIndividuals) {
+//				pOffspring = buildCrossoverIndividual(p1, p2);
+//				offspring.addProgramAtIndex(pOffspring, i);
+//			}
+//			else {
+//				pOffspring = buildCrossoverSemantics(p1, p2);
+//				offspring.addProgramAtIndex(pOffspring,i);
+//			}	
+			pOffspring=applyStandardCrossover(p1,p1);
+			offspring.addProgramAtIndex(pOffspring,i);
 			pOffspring.evaluate(data);
 		}	
 		//print
@@ -413,15 +415,17 @@ public class EsgsgpRun extends GsgpRun {
 		
 		for(int i=0; i<mp.getNumPrograms(); i++){
 			Individual pOffspring = new Individual();
-			if (buildIndividuals) {
-				pOffspring=buildMutationIndividual(mp.getProgram(i));
-				offspring.addProgramAtIndex(pOffspring,i);
-				
-			} else {				
-				pOffspring=buildMutationSemantics(mp.getProgram(i));
-				offspring.addProgramAtIndex(pOffspring,i);
-				
-			}
+//			if (buildIndividuals) {
+//				pOffspring=buildMutationIndividual(mp.getProgram(i));
+//				offspring.addProgramAtIndex(pOffspring,i);
+//				
+//			} else {				
+//				pOffspring=buildMutationSemantics(mp.getProgram(i));
+//				offspring.addProgramAtIndex(pOffspring,i);
+//				
+//			}
+			pOffspring=applyStandardMutation(mp.getProgram(i));
+			offspring.addProgramAtIndex(pOffspring,i);
 			pOffspring.evaluate(data);
 		}
 		
