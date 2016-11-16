@@ -15,9 +15,9 @@ public class Main {
 
 	public static final String DATA_FILENAME = "Dataset_bioav/";
 	public static final boolean SHUFFLE_AND_SPLIT = false;
-	//public static final String DATA_FILENAME = "bio";
-	public static final int NUMBER_OF_RUNS = 30;
-	public static final int NUMBER_OF_GENERATIONS = 500;
+	//public static final String DATA_FILENAME = "ppb_Original";
+	public static final int NUMBER_OF_RUNS = 10;
+	public static final int NUMBER_OF_GENERATIONS = 100;
 	public static int CURRENTRUN;
 
 	public static void main(String[] args) throws IOException {
@@ -92,6 +92,7 @@ public class Main {
 		} else {
 			trainingData = readData(dataFilename+"train"+Main.CURRENTRUN +".txt");
 			unseenData = readData(dataFilename +"test"+Main.CURRENTRUN +".txt");
+
 		}
 		return new Data(trainingData, unseenData);
 	}
