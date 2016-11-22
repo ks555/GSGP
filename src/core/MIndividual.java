@@ -90,20 +90,40 @@ public class MIndividual extends Individual {
 		double dotProd;
 		double normA;
 		double normB;
+		double[][] normalized=new double[numPrograms][];
 		
 		if (numPrograms == 2){
 			dotProd = dot(errorVector[0], errorVector[1]);			
 			normA = magnitude(errorVector[0]); 			
 			normB = magnitude(errorVector[1]);
+			trainingTheta = Math.acos(dotProd/(normA*normB));
 		}
 		
-		else{
-			dotProd=0;
-			normA=1;
-			normB=1;
+		else if (numPrograms == 3){
+			double[][] planeVector=new double[2][];
+			int index=0;
+			for(int i=0;i<numPrograms;i++){		
+				index=0;
+				for (int j=0;j<numPrograms;j++){
+					
+					if(j!=i){
+						planeVector[index]=errorVector[j];					
+						index++;
+					}			
+				}
+				normalized[0]=scalar(errorVector[i],1/magnitude(errorVector[i]));
+				normalized[1]=scalar(minus(planeVector[0],scalar(normalized[0],dot(normalized[0],planeVector[0]))),1/magnitude(minus(planeVector[0],scalar(normalized[0],dot(normalized[0],planeVector[0])))));
+				normalized[2]=scalar(minus(minus(planeVector[1],scalar(normalized[0],dot(normalized[0],planeVector[1]))),scalar(normalized[1],dot(normalized[1],planeVector[1]))),1/magnitude(minus(minus(planeVector[1],scalar(normalized[0],dot(normalized[0],planeVector[1]))),scalar(normalized[1],dot(normalized[1],planeVector[1])))));
+				trainingTheta=Math.asin(dot(planeVector[1],normalized[2])/Math.sqrt(dot(planeVector[1],planeVector[1])));
+			}
 		}		
+		
+//		V1 = Normalize[v];
+//		U1 = Normalize[u - (V1.u) V1];
+//		W1 = Normalize[w - (w.V1) V1 - (w.U1) U1];
+//		\[Theta] = ArcSin[(w.W1)/(w.w)^(1/2)];
 
-		trainingTheta = Math.acos(dotProd/(normA*normB));
+		
 		trainingTheta =Math.toDegrees(trainingTheta);
 
 	}
@@ -305,15 +325,18 @@ public class MIndividual extends Individual {
 	
 	public double[] reconstructTrainingSemantics(){
 		//!!!change these functions to deal with N expressions	
-		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
-		double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();
-		double[] reconstructedTrainingSemantics = new double[programOneSemantics.length];
-		
-		double k = calculateK();
-		for (int i = 0; i < programOneSemantics.length; i++) {
-			reconstructedTrainingSemantics[i] =  1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
-		}		
-		
+		double[] reconstructedTrainingSemantics = new double[trainingErrorVectors[0].length];
+		if (numPrograms==2){
+			double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
+			double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();			
+			double k = calculateK();
+			for (int i = 0; i < programOneSemantics.length; i++) {
+				reconstructedTrainingSemantics[i] =  1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
+			}
+		}
+		else{
+			
+		}
 		return reconstructedTrainingSemantics;
 	}	
 	
@@ -357,14 +380,29 @@ public class MIndividual extends Individual {
 	
     // return the inner product of vectors a and b
     public double dot(double[] vectorOne, double[] vectorTwo) {
-//        if (vectorOne.length != vectorTwo.length)
-//            throw new IllegalArgumentException("Dimensions disagree for angle calculation");
+        if (vectorOne.length != vectorTwo.length)
+            throw new IllegalArgumentException("Dimensions disagree for angle calculation");
         double sum = 0.0;
         for (int i = 0; i < vectorOne.length; i++)
             sum = sum + (vectorOne[i] * vectorTwo[i]);
         return sum;
     }
     
+    public double[] scalar(double[] vectorOne, double scalar) {
+      double[] solution =new double[vectorOne.length];
+      for (int i = 0; i < vectorOne.length; i++)
+          solution[i] = vectorOne[i]*scalar;
+      return solution;
+    }
+    
+    public double[] minus(double[] vectorOne, double[] vectorTwo) {
+    	 if (vectorOne.length != vectorTwo.length)
+             throw new IllegalArgumentException("Dimensions disagree for angle calculation");
+        double[] solution =new double[vectorOne.length];
+        for (int i = 0; i < vectorOne.length; i++)
+            solution[i] = vectorOne[i]-vectorTwo[i];
+        return solution;
+      }
     // return the Euclidean norm of this Vector
     public double magnitude(double[] vector) {
         return Math.sqrt(dot(vector,vector));
