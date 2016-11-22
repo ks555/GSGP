@@ -19,9 +19,13 @@ public class MIndividual extends Individual {
 	protected static long nextId;
 
 	protected long id;
+	protected double k;
+	protected double w;
 	protected ArrayList<Individual> programs;
 	protected int depth;
 	protected double [] ratios;
+	protected double [] ratiosK;
+	protected double [] ratiosW;
 	protected double[][] trainingErrorVectors =  new double[numPrograms][];
 	protected double [][] unseenErrorVectors =  new double[numPrograms][];
 	protected double trainingTheta,unseenTheta;
@@ -52,10 +56,10 @@ public class MIndividual extends Individual {
 	public void evaluate(Data data) {
 		evaluateTrainingTheta(data);
 		evaluateUnseenTheta(data);
-		double[] reconstructedTrainingOutput = reconstructTrainingSemantics();
-		double[] reconstructedUnseenOutput = reconstructUnseenSemantics();
 		double[][] trainingData = data.getTrainingData();
 		double[][] unseenData = data.getUnseenData();
+		double[] reconstructedTrainingOutput = reconstructTrainingSemantics(trainingData);
+		double[] reconstructedUnseenOutput = reconstructUnseenSemantics();
 		reconTrainingError=calculateRMSE(trainingData, reconstructedTrainingOutput);
 		reconUnseenError=calculateRMSE(unseenData, reconstructedUnseenOutput);
 	}	
@@ -90,20 +94,40 @@ public class MIndividual extends Individual {
 		double dotProd;
 		double normA;
 		double normB;
+		double[][] normalized=new double[numPrograms][];
 		
 		if (numPrograms == 2){
 			dotProd = dot(errorVector[0], errorVector[1]);			
 			normA = magnitude(errorVector[0]); 			
 			normB = magnitude(errorVector[1]);
+			trainingTheta = Math.acos(dotProd/(normA*normB));
 		}
 		
-		else{
-			dotProd=0;
-			normA=1;
-			normB=1;
+		else if (numPrograms == 3){
+			double[][] planeVector=new double[2][];
+			int index=0;
+			for(int i=0;i<numPrograms;i++){		
+				index=0;
+				for (int j=0;j<numPrograms;j++){
+					
+					if(j!=i){
+						planeVector[index]=errorVector[j];					
+						index++;
+					}			
+				}
+				normalized[0]=scalar(errorVector[i],1/magnitude(errorVector[i]));
+				normalized[1]=scalar(minus(planeVector[0],scalar(normalized[0],dot(normalized[0],planeVector[0]))),1/magnitude(minus(planeVector[0],scalar(normalized[0],dot(normalized[0],planeVector[0])))));
+				normalized[2]=scalar(minus(minus(planeVector[1],scalar(normalized[0],dot(normalized[0],planeVector[1]))),scalar(normalized[1],dot(normalized[1],planeVector[1]))),1/magnitude(minus(minus(planeVector[1],scalar(normalized[0],dot(normalized[0],planeVector[1]))),scalar(normalized[1],dot(normalized[1],planeVector[1])))));
+				trainingTheta=Math.asin(dot(planeVector[1],normalized[2])/Math.sqrt(dot(planeVector[1],planeVector[1])));
+			}
 		}		
+		
+//		V1 = Normalize[v];
+//		U1 = Normalize[u - (V1.u) V1];
+//		W1 = Normalize[w - (w.V1) V1 - (w.U1) U1];
+//		\[Theta] = ArcSin[(w.W1)/(w.w)^(1/2)];
 
-		trainingTheta = Math.acos(dotProd/(normA*normB));
+		
 		trainingTheta =Math.toDegrees(trainingTheta);
 
 	}
@@ -303,47 +327,122 @@ public class MIndividual extends Individual {
 		return Math.sqrt(sum);
 	}
 	
-	public double[] reconstructTrainingSemantics(){
+	public double[] reconstructTrainingSemantics(double[][] trainingData){
 		//!!!change these functions to deal with N expressions	
-		double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
-		double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();
-		double[] reconstructedTrainingSemantics = new double[programOneSemantics.length];
+		double[] reconstructedTrainingSemantics = new double[trainingErrorVectors[0].length];
+		k = calculateK(trainingData);
 		
-		double k = calculateK();
-		for (int i = 0; i < programOneSemantics.length; i++) {
-			reconstructedTrainingSemantics[i] =  1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
-		}		
-		
+		if (numPrograms==2){
+			double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
+			double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();			
+			
+			for (int i = 0; i < programOneSemantics.length; i++) {
+				reconstructedTrainingSemantics[i] =  1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
+			}
+		}
+		else{
+			//calc k and w using median from each index
+			//create array variable to hold k, one for w
+			//use function to get medians
+			//reconstruct
+			//add to unseen too...how does this work with unseen?\
+			double[] programOneSemantics = getProgram(0).getTrainingDataOutputs();
+			double[] programTwoSemantics = getProgram(1).getTrainingDataOutputs();
+			double[] programThreeSemantics = getProgram(2).getTrainingDataOutputs();
+			w = calculateW(programOneSemantics,programTwoSemantics,programThreeSemantics,trainingData);
+	
+			for (int i = 0; i < programOneSemantics.length; i++) {
+				reconstructedTrainingSemantics[i] =  1/((1-k)*(1-w))*programOneSemantics[i]-w/((1-k)*(1-w))*programTwoSemantics[i]
+						-k/(1-k)*programThreeSemantics[i];
+			}
+						
+			
+		}
 		return reconstructedTrainingSemantics;
 	}	
 	
 	public double[] reconstructUnseenSemantics(){
 		//!!!change these functions to deal with N expressions
-		double[] reconstructedUnseenSemantics = new double[unseenErrorVectors[0].length];	
-		double[] programOneSemantics = getProgram(0).getUnseenDataOutputs();;
-		double[] programTwoSemantics = getProgram(1).getUnseenDataOutputs();
-		
-		double k = calculateK();
-		for (int i = 0; i < programOneSemantics.length; i++) {
-			reconstructedUnseenSemantics[i] = 1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
-		}			
+		double[] reconstructedUnseenSemantics = new double[unseenErrorVectors[0].length];
+		if (numPrograms==2){	
+			double[] programOneSemantics = getProgram(0).getUnseenDataOutputs();;
+			double[] programTwoSemantics = getProgram(1).getUnseenDataOutputs();
+			
+			for (int i = 0; i < programOneSemantics.length; i++) {
+				reconstructedUnseenSemantics[i] = 1/(1-k)*programOneSemantics[i]-k/(1-k)*programTwoSemantics[i];
+			}	
+		}
+		else{
+			
+		}
 		return reconstructedUnseenSemantics;
 	}	
 	
-	public double calculateK(){
+	public double calculateK(double[][] trainingData){
 		double k;
-		//!!! for two expressions only
-		double[] programOneSemantics = getProgram(0).getTrainingErrorVector();
-		double[] programTwoSemantics = getProgram(1).getTrainingErrorVector();
-		calcRatios(programOneSemantics, programTwoSemantics);
-		
-		//get median
-		if (ratios.length % 2 == 0)
-		   k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
-			//k = (double)ratios[ratios.length/2];
-		else
-		    k = (double) ratios[ratios.length/2];
+		if (numPrograms==2){
+			//!!! for two expressions only
+			double[] programOneSemantics = getProgram(0).getTrainingErrorVector();
+			double[] programTwoSemantics = getProgram(1).getTrainingErrorVector();
+			calcRatios(programOneSemantics, programTwoSemantics);
+			//get median
+			if (ratios.length % 2 == 0)
+			   k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
+				//k = (double)ratios[ratios.length/2];
+			else
+			    k = (double) ratios[ratios.length/2];
+		}
+		else{
+			//!!! for two expressions only
+			double[] programOneSemantics = getProgram(0).getTrainingErrorVector();
+			double[] programTwoSemantics = getProgram(1).getTrainingErrorVector();
+			double[] programThreeSemantics = getProgram(2).getTrainingErrorVector();
+			calculateK(programOneSemantics, programTwoSemantics,programThreeSemantics,trainingData);
+			//get median
+			if (ratios.length % 2 == 0)
+			   k = ((double)ratios[ratios.length/2] + (double)ratios[ratios.length/2 - 1])/2;
+				//k = (double)ratios[ratios.length/2];
+			else
+			    k = (double) ratios[ratios.length/2];
+		}
+
 		return k;
+	}
+	//
+	public double calculateK(double[] p1s,double[] p2s,double[] p3s,double[][] trainingData){
+		double k;
+		for (int i=0;i<p1s.length;i++){
+			for(int j=0;j<p1s.length;j++){
+				double t1 = trainingData[i][trainingData[0].length - 1];
+				double t2 = trainingData[j][trainingData[0].length - 1];
+				ratiosK[i]=(p1s[i]*p2s[j]-p1s[j]*p2s[i]-p1s[i]*t2+p1s[j]*t1+p2s[i]*t2-p2s[j]*t1)/
+						(p1s[i]*p3s[j]-p1s[j]*p3s[i]-p2s[i]*p3s[j]+p2s[j]*p3s[i]-p1s[i]*t2+p1s[j]*t1+p2s[i]*t2-p2s[j]*t1);
+			}			
+		}
+		if (ratios.length % 2 == 0)
+			   k = ((double)ratiosK[ratiosK.length/2] + (double)ratiosK[ratiosK.length/2 - 1])/2;
+				//k = (double)ratios[ratios.length/2];
+			else
+			    k = (double) ratiosK[ratiosK.length/2];
+		return k;
+	}
+	
+	public double calculateW(double[] p1s,double[] p2s,double[] p3s,double[][] trainingData){
+		double w;
+		for (int i=0;i<p1s.length;i++){
+			for(int j=0;j<p1s.length;j++){
+				double t1 = trainingData[i][trainingData[0].length - 1];
+				double t2 = trainingData[j][trainingData[0].length - 1];
+				ratiosW[i]=(p1s[i]*p3s[j]-p1s[j]*p3s[i]-p1s[i]*t2+p1s[j]*t1+p3s[i]*t2-p3s[j]*t1)/
+						(p2s[i]*p3s[j]-p2s[j]*p3s[i]-p2s[i]*t2+p2s[j]*t1+p3s[i]*t2-p3s[j]*t1);
+			}			
+		}
+		if (ratios.length % 2 == 0)
+			   w = ((double)ratiosW[ratiosW.length/2] + (double)ratiosW[ratiosW.length/2 - 1])/2;
+				//k = (double)ratios[ratios.length/2];
+			else
+			    w = (double) ratiosW[ratiosW.length/2];
+		return w;
 	}
 	
 	protected double calculateRMSE(double[][] data, double[] outputs) {
@@ -357,14 +456,29 @@ public class MIndividual extends Individual {
 	
     // return the inner product of vectors a and b
     public double dot(double[] vectorOne, double[] vectorTwo) {
-//        if (vectorOne.length != vectorTwo.length)
-//            throw new IllegalArgumentException("Dimensions disagree for angle calculation");
+        if (vectorOne.length != vectorTwo.length)
+            throw new IllegalArgumentException("Dimensions disagree for angle calculation");
         double sum = 0.0;
         for (int i = 0; i < vectorOne.length; i++)
             sum = sum + (vectorOne[i] * vectorTwo[i]);
         return sum;
     }
     
+    public double[] scalar(double[] vectorOne, double scalar) {
+      double[] solution =new double[vectorOne.length];
+      for (int i = 0; i < vectorOne.length; i++)
+          solution[i] = vectorOne[i]*scalar;
+      return solution;
+    }
+    
+    public double[] minus(double[] vectorOne, double[] vectorTwo) {
+    	 if (vectorOne.length != vectorTwo.length)
+             throw new IllegalArgumentException("Dimensions disagree for angle calculation");
+        double[] solution =new double[vectorOne.length];
+        for (int i = 0; i < vectorOne.length; i++)
+            solution[i] = vectorOne[i]-vectorTwo[i];
+        return solution;
+      }
     // return the Euclidean norm of this Vector
     public double magnitude(double[] vector) {
         return Math.sqrt(dot(vector,vector));
@@ -375,7 +489,7 @@ public class MIndividual extends Individual {
 	
 	public double getK(){
 		
-		return calculateK();
+		return k;
 	}
 	
 	public double getTrainingTheta() {

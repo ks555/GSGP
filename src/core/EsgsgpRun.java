@@ -51,8 +51,7 @@ public class EsgsgpRun extends GsgpRun {
 			
 			super.initialize();
 			
-			populations.add(population);
-			
+			populations.add(population);			
 		}
 		for (int i = 0; i < population.getSize(); i++) {
 			
