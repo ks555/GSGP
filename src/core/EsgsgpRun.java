@@ -72,7 +72,7 @@ public class EsgsgpRun extends GpRun {
 				}
 				else{
 					double k = mindividual.calculateK(ind);
-					while(Math.abs(k)<1.2&&Math.abs(k)>0.98){
+					while(Math.abs(k)<1.01&&Math.abs(k)>0.999){
 						//if k is too small, replace ind with a new program
 						ind = grow(this.getMaximumDepth());
 						ind.evaluate(data);
@@ -155,7 +155,7 @@ public class EsgsgpRun extends GpRun {
 					//check distances of each program
 					double distance=newIndividual.calcDistances();
 					double k = newIndividual.calculateK();
-					while(Math.abs(k)<1.2&&Math.abs(k)>0.98){						
+					while(Math.abs(k)<1.01&&Math.abs(k)>0.999){						
 						//mp1 = nestedSelectMParent();
 						//mp2 = nestedSelectMParent();
 						mp1 = selectMParent();
@@ -190,7 +190,7 @@ public class EsgsgpRun extends GpRun {
 					}
 					double distance = newIndividual.calcDistances();
 					double k = newIndividual.calculateK();
-					while(Math.abs(k)<1.2&&Math.abs(k)>0.98){
+					while(Math.abs(k)<1.01&&Math.abs(k)>0.999){
 						//mp1 = nestedSelectMParent();	
 						mp1 = selectMParent();
 						flag=false;
