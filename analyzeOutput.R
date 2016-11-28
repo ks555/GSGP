@@ -3,13 +3,7 @@ outputs <- read.csv("outputs.txt", sep=",")
 ##below is only for removing last empty column of outputs - clean this up in java instead
 outputs<-outputs[,-ncol(outputs)]
 population<-read.csv("population.txt",sep=",")
-# trainingData<-read.table("../ppb_training.txt", quote="\"", comment.char="")
-# unseenData<-read.table("../ppb_unseen.txt",quote="\"", comment.char="")
-# trainingTarget=t(trainingData[,ncol(trainingData)])
 
-trainingData<-read.table("../Dataset_bioav/test1_.txt", quote="\"", comment.char="")
-unseenData<-read.table("../Dataset_bioav/train1_.txt",quote="\"", comment.char="")
-trainingTarget=t(trainingData[,ncol(trainingData)])
 
 trainingLength = 252
 unseenLength = 107
@@ -21,8 +15,8 @@ trainingErrors<-outputs[,1:trainingErrorEnd]
 trainingOutputs<-outputs[,-4:-trainingErrorEnd]
 
 
-subsetOutput <- subset(trainingOutputs, ID==1710)
-subsetError <- subset(trainingErrors, ID==1710)
+subsetOutput <- subset(trainingOutputs, ID==29017)
+subsetError <- subset(trainingErrors, ID==29017)
 
 
 theta <- acos( sum(subsetError[,4:trainingErrorEnd][1,]*subsetError[,4:trainingErrorEnd][2,]) / ( sqrt(sum(subsetError[,4:trainingErrorEnd][1,] * subsetError[,4:trainingErrorEnd][1,])) * sqrt(sum(subsetError[,4:trainingErrorEnd][2,] * subsetError[,4:trainingErrorEnd][2,])) ) )
@@ -30,6 +24,15 @@ theta <- acos( sum(subsetError[,4:trainingErrorEnd][1,]*subsetError[,4:trainingE
 ratios=subsetError[,4:trainingErrorEnd][1,]/subsetError[,4:trainingErrorEnd][2,]
 ratios=sort(ratios)
 
+
+##to check reconstructed based on data, need to import data to get targe
+# trainingData<-read.table("../ppb_training.txt", quote="\"", comment.char="")
+# unseenData<-read.table("../ppb_unseen.txt",quote="\"", comment.char="")
+# trainingTarget=t(trainingData[,ncol(trainingData)])
+
+#trainingData<-read.table("../Dataset_bioav/test1_.txt", quote="\"", comment.char="")
+#unseenData<-read.table("../Dataset_bioav/train1_.txt",quote="\"", comment.char="")
+#trainingTarget=t(trainingData[,ncol(trainingData)])
 k=0.958
 
 reconstructed =1/(1-k)*subsetOutput[1,4:trainingErrorEnd]-k/(1-k)*subsetOutput[2,4:trainingErrorEnd]

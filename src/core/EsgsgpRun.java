@@ -72,17 +72,18 @@ public class EsgsgpRun extends GpRun {
 				}
 				else{
 					double k = mindividual.calculateK(ind);
-					while(Math.abs(k)<1.01&&Math.abs(k)>0.999){
+					while(Math.abs(k)<1.01&&Math.abs(k)>0.99){
 						//if k is too small, replace ind with a new program
 						ind = grow(this.getMaximumDepth());
 						ind.evaluate(data);
 						k=mindividual.calculateK(ind);
-						System.out.println(mindividual.calculateK(ind));
+					
 					}
 					
 				}
 				
 				mindividual.addProgramAtIndex(ind,j);
+				
 				
 				}
 								
@@ -154,8 +155,9 @@ public class EsgsgpRun extends GpRun {
 					}
 					//check distances of each program
 					double distance=newIndividual.calcDistances();
-					double k = newIndividual.calculateK();
-					while(Math.abs(k)<1.01&&Math.abs(k)>0.999){						
+					double k = newIndividual.calculateK(data.getTrainingData());
+				
+					while(Math.abs(k)<1.01&&Math.abs(k)>0.99){						
 						//mp1 = nestedSelectMParent();
 						//mp2 = nestedSelectMParent();
 						mp1 = selectMParent();
@@ -168,7 +170,8 @@ public class EsgsgpRun extends GpRun {
 							}
 						}
 						distance=newIndividual.calcDistances();
-						k = newIndividual.calculateK();
+						k = newIndividual.calculateK(data.getTrainingData());
+						
 					}
 					
 			
@@ -180,7 +183,7 @@ public class EsgsgpRun extends GpRun {
 				else {
 					
 					newIndividual = applyStandardMutation(mp1);
-					newIndividual.setMp1(mp1);
+					
 					boolean flag=false;
 					//check errors of each program
 					for(int i=0; i<newIndividual.numPrograms;i++){
@@ -189,8 +192,8 @@ public class EsgsgpRun extends GpRun {
 						}
 					}
 					double distance = newIndividual.calcDistances();
-					double k = newIndividual.calculateK();
-					while(Math.abs(k)<1.01&&Math.abs(k)>0.999){
+					double k = newIndividual.calculateK(data.getTrainingData());
+					while(Math.abs(k)<1.01&&Math.abs(k)>0.99){
 						//mp1 = nestedSelectMParent();	
 						mp1 = selectMParent();
 						flag=false;
@@ -201,9 +204,9 @@ public class EsgsgpRun extends GpRun {
 							}
 						}
 						distance = newIndividual.calcDistances();
-						k = newIndividual.calculateK();
+						k = newIndividual.calculateK(data.getTrainingData());
 					}
-
+					newIndividual.setMp1(mp1);
 				}
 				
 				/*
@@ -494,7 +497,7 @@ public class EsgsgpRun extends GpRun {
 	      FileWriter writer = new FileWriter(file); 
 	      // Writes the content to the file
 	      writer.write("CurrentRun,Generation,NumGens,NumRuns,popSize,trainingTheta,UnseenTheta,"
-	      		+ "reconTrainError,reconUnseenError,depth,depthLimitOn,maxDepth,crossoverProb,k"); 
+	      		+ "reconTrainError,reconUnseenError,depth,depthLimitOn,maxDepth,crossoverProb,k,ID"); 
 	      writer.flush();
 	      writer.close();
 	   // creates a FileWriter Object
@@ -526,8 +529,8 @@ public class EsgsgpRun extends GpRun {
 	      writer.write("\n"+Main.CURRENTRUN+","+currentGeneration+","+Main.NUMBER_OF_GENERATIONS+","+Main.NUMBER_OF_RUNS+
 	    		  ","+populationSize+","+currentMBest.getTrainingTheta()+","+currentMBest.getUnseenTheta()+","+currentMBest.getReconTrainingError()+
 	    		  ","+currentMBest.getReconUnseenError()+
-	    		  ","+currentMBest.getDepth() + ","+","+applyDepthLimit+","+maximumDepth+
-	    		  ","+crossoverProbability+","+currentMBest.getK()); 
+	    		  ","+currentMBest.getDepth() + ","+applyDepthLimit+","+maximumDepth+
+	    		  ","+crossoverProbability+","+currentMBest.getK()+","+currentMBest.getId()); 
 	      writer.flush();
 	      writer.close();	      
 	   

@@ -117,14 +117,16 @@ public class Main {
 		data = new double[allLines.size()-2][numberOfColumns];
 		System.out.println("columns " + numberOfColumns );
 		System.out.println("rows " + data.length );
+		int index=0;
 		for (int i = 2; i < data.length; i++) {
 			tokens = new StringTokenizer(allLines.get(i).trim());
 			for (int k = 0; k < numberOfColumns; k++) {
-				data[i][k] = Double.parseDouble(tokens.nextToken().trim());
-				if (i==2){
-					//System.out.println(data[i][k]);
-				}
+				data[index][k] = Double.parseDouble(tokens.nextToken().trim());				
+				//System.out.print(data[index][k]);	
+				//System.out.print(data[index][k]);	
+				
 			}
+			index++;
 		}
 		return data;
 	}
